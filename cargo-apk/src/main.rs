@@ -27,6 +27,21 @@ struct Args {
     /// Use device with the given serial (see `adb devices`)
     #[clap(short, long)]
     device: Option<String>,
+    /// Enable deterministic (reproducible) build settings
+    #[clap(long, env = "CARGO_APK_DETERMINISTIC")]
+    deterministic: bool,
+    /// Produce an unsigned APK
+    #[clap(long, env = "CARGO_APK_NO_SIGN")]
+    unsigned: bool,
+    /// zipalign alignment in bytes (default: 4)
+    #[clap(long = "align", env = "CARGO_APK_ALIGN", default_value = "4")]
+    align: u32,
+    /// UNIX timestamp used for ZIP mtimes (defaults to SOURCE_DATE_EPOCH if present)
+    #[clap(long = "timestamp")]
+    timestamp: Option<u64>,
+    /// Disable ZIP normalization (escape hatch)
+    #[clap(long = "no-normalize-zip")]
+    no_normalize_zip: bool,
 }
 
 #[derive(clap::Subcommand)]
@@ -147,11 +162,25 @@ fn main() -> anyhow::Result<()> {
         ApkSubCmd::Check { args } => {
             let cmd = Subcommand::new(args.subcommand_args)?;
             let builder = ApkBuilder::from_subcommand(&cmd, args.device)?;
+            builder.set_repro_flags(
+                args.deterministic,
+                args.unsigned,
+                args.align,
+                args.timestamp,
+                args.no_normalize_zip,
+            );
             builder.check()?;
         }
         ApkSubCmd::Build { args } => {
             let cmd = Subcommand::new(args.subcommand_args)?;
             let builder = ApkBuilder::from_subcommand(&cmd, args.device)?;
+            builder.set_repro_flags(
+                args.deterministic,
+                args.unsigned,
+                args.align,
+                args.timestamp,
+                args.no_normalize_zip,
+            );
             for artifact in cmd.artifacts() {
                 builder.build(artifact)?;
             }
@@ -299,9 +328,10 @@ fn test_split_apk_and_cargo_args() {
             Args {
                 subcommand_args: cargo_subcommand::Args {
                     quiet: true,
-                    ..args_default.subcommand_args
+                    ..args_default.subcommand_args.clone()
                 },
                 device: Some("adb:test".to_string()),
+                ..args_default.clone()
             },
             vec!["--no-deps".to_string(), "--unrecognized".to_string()]
         )

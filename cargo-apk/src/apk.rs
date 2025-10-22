@@ -17,6 +17,16 @@ pub struct ApkBuilder<'a> {
     build_dir: PathBuf,
     build_targets: Vec<Target>,
     device_serial: Option<String>,
+    repro: ReproCfg,
+}
+
+#[derive(Clone, Copy, Default)]
+struct ReproCfg {
+    deterministic: bool,
+    unsigned: bool,
+    align: u32,           // zipalign boundary
+    ts_unix: Option<u64>, // ZIP mtime
+    no_normalize_zip: bool,
 }
 
 impl<'a> ApkBuilder<'a> {
@@ -133,7 +143,32 @@ impl<'a> ApkBuilder<'a> {
             build_dir,
             build_targets,
             device_serial,
+            repro: ReproCfg::default(),
         })
+    }
+
+    pub fn set_repro_flags(
+        &self,
+        deterministic: bool,
+        unsigned: bool,
+        align: u32,
+        ts: Option<u64>,
+        no_norm: bool,
+    ) {
+        // builder is shared by reference; store to interior mutability is overkill, so:
+        let mut_self: *const Self = self;
+        let mut_self = mut_self as *mut Self;
+        let env_ts = std::env::var("SOURCE_DATE_EPOCH").ok().and_then(|s| s.parse::<u64>().ok());
+
+        unsafe {
+            (*mut_self).repro = ReproCfg {
+                deterministic,
+                unsigned,
+                align: if align == 0 { 4 } else { align },
+                ts_unix: ts.or(env_ts),
+                no_normalize_zip: no_norm,
+            };
+        }
     }
 
     pub fn check(&self) -> Result<(), Error> {
@@ -214,6 +249,9 @@ impl<'a> ApkBuilder<'a> {
             disable_aapt_compression: is_debug_profile,
             strip: self.manifest.strip,
             reverse_port_forward: self.manifest.reverse_port_forward.clone(),
+            align: self.repro.align,
+            normalize_zip: self.repro.deterministic && !self.repro.no_normalize_zip,
+            zip_timestamp: self.repro.ts_unix,
         };
         let mut apk = config.create_apk()?;
 
@@ -298,6 +336,13 @@ impl<'a> ApkBuilder<'a> {
 
         let unsigned = apk.add_pending_libs_and_align()?;
 
+        if self.repro.unsigned {
+            eprintln!(
+                "--unsigned set; producing unsigned APK at {}",
+                config.apk().display()
+            );
+            return Ok(ndk_build::apk::Apk::from_config(unsigned.));
+        }
         println!(
             "Signing `{}` with keystore `{}`",
             config.apk().display(),

@@ -44,6 +44,9 @@ pub struct ApkConfig {
     pub disable_aapt_compression: bool,
     pub strip: StripConfig,
     pub reverse_port_forward: HashMap<String, String>,
+    pub align: u32,
+    pub normalize_zip: bool,
+    pub zip_timestamp: Option<u64>,
 }
 
 impl ApkConfig {
@@ -206,7 +209,9 @@ impl<'a> UnalignedApk<'a> {
 
         aapt.arg(self.config.unaligned_apk());
 
-        for lib_path_unix in self.pending_libs {
+        let mut libs: Vec<_> = self.pending_libs.into_iter().collect();
+        libs.sort();
+        for lib_path_unix in libs {
             aapt.arg(lib_path_unix);
         }
 
@@ -214,11 +219,15 @@ impl<'a> UnalignedApk<'a> {
             return Err(NdkError::CmdFailed(Box::new(aapt)));
         }
 
+        if self.config.normalize_zip {
+            normalize_zip_in_place(self.config.unaligned_apk(), self.config.zip_timestamp)?;
+        }
+
         let mut zipalign = self.config.build_tool(bin!("zipalign"))?;
         zipalign
             .arg("-f")
             .arg("-v")
-            .arg("4")
+            .arg(self.config.align.to_string())
             .arg(self.config.unaligned_apk())
             .arg(self.config.apk());
 
@@ -228,6 +237,17 @@ impl<'a> UnalignedApk<'a> {
 
         Ok(UnsignedApk(self.config))
     }
+}
+
+/// Normalize a ZIP: set deterministic mtimes, strip variable extra fields, and
+/// write entries in lexicographic order for both local headers and central dir.
+fn normalize_zip_in_place(path: PathBuf, ts: Option<u64>) -> Result<(), NdkError> {
+    use std::fs;
+    let data = fs::read(&path)?;
+    let normalized = crate::zipnorm::normalize_zip(&data, ts)
+        .map_err(|e| NdkError::IoPathError(path.clone(), e))?;
+    fs::write(&path, normalized)?;
+    Ok(())
 }
 
 pub struct UnsignedApk<'a>(&'a ApkConfig);

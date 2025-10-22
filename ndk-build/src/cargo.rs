@@ -107,6 +107,43 @@ pub fn cargo_ndk(
 
     cargo.env("CARGO_ENCODED_RUSTFLAGS", rustflags);
 
+    if std::env::var("CARGO_APK_DETERMINISTIC").ok().as_deref() == Some("1") {
+        let mut more = String::new();
+        const SEP: &str = "\x1f";
+        let pwd = std::env::current_dir().ok();
+        let cargo_home = std::env::var("CARGO_HOME")
+            .ok()
+            .or_else(|| std::env::var("HOME").ok().map(|h| format!("{h}/.cargo")));
+        if let Some(pwd) = pwd {
+            more.push_str("--remap-path-prefix=");
+            more.push_str(pwd.to_str().unwrap());
+            more.push_str("=/src");
+            more.push_str(SEP);
+        }
+        if let Some(ch) = cargo_home {
+            more.push_str("--remap-path-prefix=");
+            more.push_str(&ch);
+            more.push_str("=/cargo-home");
+            more.push_str(SEP);
+        }
+        more.push_str("-Cdebuginfo=0");
+        more.push_str(SEP);
+        more.push_str("-Clink-arg=-Wl,--build-id=none");
+        more.push_str(SEP);
+        more.push_str("-Ccodegen-units=1");
+
+        let merged = match std::env::var("CARGO_ENCODED_RUSTFLAGS") {
+            Ok(mut v) => {
+                v.push_str(SEP);
+                v.push_str(&more);
+                v
+            }
+            Err(_) => more,
+        };
+        cargo.env("CARGO_ENCODED_RUSTFLAGS", merged);
+        cargo.env("CARGO_INCREMENTAL", "0");
+    }
+
     Ok(cargo)
 }
 

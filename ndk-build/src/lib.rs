@@ -36,3 +36,4 @@ pub mod manifest;
 pub mod ndk;
 pub mod readelf;
 pub mod target;
+pub mod zipnorm;
