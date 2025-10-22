@@ -151,26 +151,29 @@ impl<'a> ApkBuilder<'a> {
     }
 
     pub fn set_repro_flags(
-        &self,
+        &mut self,
         deterministic: bool,
         unsigned: bool,
         align: u32,
         ts: Option<u64>,
         no_norm: bool,
     ) {
-        let mut_self: *const Self = self;
-        let mut_self = mut_self as *mut Self;
         let env_ts = std::env::var("SOURCE_DATE_EPOCH")
             .ok()
             .and_then(|s| s.parse::<u64>().ok());
-        unsafe {
-            (*mut_self).repro = ReproCfg {
-                deterministic,
-                unsigned,
-                align: if align == 0 { 4 } else { align },
-                ts_unix: ts.or(env_ts),
-                no_normalize_zip: no_norm,
-            };
+
+        self.repro = ReproCfg {
+            deterministic,
+            unsigned,
+            align: if align == 0 { 4 } else { align },
+            ts_unix: ts.or(env_ts),
+            no_normalize_zip: no_norm,
+        };
+
+        if deterministic {
+            unsafe { std::env::set_var("CARGO_APK_DETERMINISTIC", "1") };
+        } else {
+            unsafe { std::env::remove_var("CARGO_APK_DETERMINISTIC") };
         }
     }
 

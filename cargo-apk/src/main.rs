@@ -162,7 +162,7 @@ fn main() -> anyhow::Result<()> {
     match cmd {
         ApkSubCmd::Check { args } => {
             let cmd = Subcommand::new(args.subcommand_args)?;
-            let builder = ApkBuilder::from_subcommand(&cmd, args.device)?;
+            let mut builder = ApkBuilder::from_subcommand(&cmd, args.device)?;
             builder.set_repro_flags(
                 args.deterministic,
                 args.unsigned,
@@ -174,7 +174,7 @@ fn main() -> anyhow::Result<()> {
         }
         ApkSubCmd::Build { args } => {
             let cmd = Subcommand::new(args.subcommand_args)?;
-            let builder = ApkBuilder::from_subcommand(&cmd, args.device)?;
+            let mut builder = ApkBuilder::from_subcommand(&cmd, args.device)?;
             builder.set_repro_flags(
                 args.deterministic,
                 args.unsigned,
@@ -192,7 +192,7 @@ fn main() -> anyhow::Result<()> {
         } => {
             let (args, cargo_args) = split_apk_and_cargo_args(cargo_args);
             let cmd = Subcommand::new(args.subcommand_args)?;
-            let builder = ApkBuilder::from_subcommand(&cmd, args.device)?;
+            let mut builder = ApkBuilder::from_subcommand(&cmd, args.device)?;
             builder.set_repro_flags(
                 args.deterministic,
                 args.unsigned,
@@ -204,7 +204,7 @@ fn main() -> anyhow::Result<()> {
         }
         ApkSubCmd::Run { args, no_logcat } => {
             let cmd = Subcommand::new(args.subcommand_args)?;
-            let builder = ApkBuilder::from_subcommand(&cmd, args.device)?;
+            let mut builder = ApkBuilder::from_subcommand(&cmd, args.device)?;
             builder.set_repro_flags(
                 args.deterministic,
                 args.unsigned,
@@ -217,7 +217,7 @@ fn main() -> anyhow::Result<()> {
         }
         ApkSubCmd::Gdb { args } => {
             let cmd = Subcommand::new(args.subcommand_args)?;
-            let builder = ApkBuilder::from_subcommand(&cmd, args.device)?;
+            let mut builder = ApkBuilder::from_subcommand(&cmd, args.device)?;
             builder.set_repro_flags(
                 args.deterministic,
                 args.unsigned,
