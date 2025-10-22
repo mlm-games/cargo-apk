@@ -322,7 +322,7 @@ impl<'a> ApkBuilder<'a> {
                 path,
                 password: ndk_build::ndk::DEFAULT_DEV_KEYSTORE_PASSWORD.to_owned(),
             },
-            (Some(path), None) => return Err(Error::MissingReleaseKey(profile_name.to_owned())),
+            (Some(_path), None) => return Err(Error::MissingReleaseKey(profile_name.to_owned())),
             (None, _) => {
                 if let Some(msk) = self.manifest.signing.get(profile_name) {
                     Key {
