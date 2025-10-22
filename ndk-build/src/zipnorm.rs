@@ -1,4 +1,4 @@
-use std::io::{Cursor, Read, Write};
+use std::io::{Cursor, Write};
 use zip::{
     CompressionMethod, DateTime, ZipArchive, ZipWriter,
     write::{ExtendedFileOptions, FileOptions},

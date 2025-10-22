@@ -3,7 +3,6 @@ use crate::manifest::{Inheritable, Manifest, Root};
 use cargo_subcommand::{Artifact, ArtifactType, CrateType, Profile, Subcommand};
 use ndk_build::apk::{Apk, ApkConfig};
 use ndk_build::cargo::{VersionCode, cargo_ndk};
-use ndk_build::dylibs::get_libs_search_paths;
 use ndk_build::error::NdkError;
 use ndk_build::manifest::{IntentFilter, MetaData};
 use ndk_build::ndk::{Key, Ndk};

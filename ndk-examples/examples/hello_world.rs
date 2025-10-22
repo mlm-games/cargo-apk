@@ -2,7 +2,7 @@ use android_activity::AndroidApp;
 use log::info;
 use ndk::trace;
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 fn android_main(_app: AndroidApp) {
     android_logger::init_once(
         android_logger::Config::default().with_max_level(log::LevelFilter::Info),
