@@ -2,13 +2,22 @@ use crate::error::Error;
 use crate::manifest::{Inheritable, Manifest, Root};
 use cargo_subcommand::{Artifact, ArtifactType, CrateType, Profile, Subcommand};
 use ndk_build::apk::{Apk, ApkConfig};
-use ndk_build::cargo::{cargo_ndk, VersionCode};
+use ndk_build::cargo::{VersionCode, cargo_ndk};
 use ndk_build::dylibs::get_libs_search_paths;
 use ndk_build::error::NdkError;
 use ndk_build::manifest::{IntentFilter, MetaData};
 use ndk_build::ndk::{Key, Ndk};
 use ndk_build::target::Target;
 use std::path::PathBuf;
+
+#[derive(Clone, Copy, Default)]
+struct ReproCfg {
+    deterministic: bool,
+    unsigned: bool,
+    align: u32,
+    ts_unix: Option<u64>,
+    no_normalize_zip: bool,
+}
 
 pub struct ApkBuilder<'a> {
     cmd: &'a Subcommand,
@@ -18,15 +27,6 @@ pub struct ApkBuilder<'a> {
     build_targets: Vec<Target>,
     device_serial: Option<String>,
     repro: ReproCfg,
-}
-
-#[derive(Clone, Copy, Default)]
-struct ReproCfg {
-    deterministic: bool,
-    unsigned: bool,
-    align: u32,           // zipalign boundary
-    ts_unix: Option<u64>, // ZIP mtime
-    no_normalize_zip: bool,
 }
 
 impl<'a> ApkBuilder<'a> {
@@ -50,9 +50,10 @@ impl<'a> ApkBuilder<'a> {
         } else if !manifest.build_targets.is_empty() {
             manifest.build_targets.clone()
         } else {
-            vec![ndk
-                .detect_abi(device_serial.as_deref())
-                .unwrap_or(Target::Arm64V8a)]
+            vec![
+                ndk.detect_abi(device_serial.as_deref())
+                    .unwrap_or(Target::Arm64V8a),
+            ]
         };
         let build_dir = dunce::simplified(cmd.target_dir())
             .join(cmd.profile())
@@ -65,14 +66,11 @@ impl<'a> ApkBuilder<'a> {
                     .ok_or(Error::InheritanceMissingWorkspace)?
                     .workspace
                     .unwrap_or_else(|| {
-                        // Unlikely to fail as cargo-subcommand should give us
-                        // a `Cargo.toml` containing a `[workspace]` table
                         panic!(
                             "Manifest `{:?}` must contain a `[workspace]` table",
                             cmd.workspace_manifest().unwrap()
                         )
                     });
-
                 workspace
                     .package
                     .ok_or(Error::WorkspaceMissingInheritedField("package"))?
@@ -83,7 +81,6 @@ impl<'a> ApkBuilder<'a> {
         };
         let version_code = VersionCode::from_semver(&package_version)?.to_code(1);
 
-        // Set default Android manifest values
         if manifest
             .android_manifest
             .version_name
@@ -92,7 +89,6 @@ impl<'a> ApkBuilder<'a> {
         {
             panic!("version_name should not be set in TOML");
         }
-
         if manifest
             .android_manifest
             .version_code
@@ -114,9 +110,8 @@ impl<'a> ApkBuilder<'a> {
             .debuggable
             .get_or_insert_with(|| *cmd.profile() == Profile::Dev);
 
+        // Ensure launcher default if missing (Add a default `MAIN` action to launch the activity, if the user didn't supply it by hand.)
         let activity = &mut manifest.android_manifest.application.activity;
-
-        // Add a default `MAIN` action to launch the activity, if the user didn't supply it by hand.
         if activity
             .intent_filter
             .iter()
@@ -128,10 +123,6 @@ impl<'a> ApkBuilder<'a> {
                 data: vec![],
             });
         }
-
-        // Export the sole Rust activity on Android S and up, if the user didn't explicitly do so.
-        // Without this, apps won't start on S+.
-        // https://developer.android.com/about/versions/12/behavior-changes-12#exported
         if target_sdk_version >= 31 {
             activity.exported.get_or_insert(true);
         }
@@ -155,11 +146,11 @@ impl<'a> ApkBuilder<'a> {
         ts: Option<u64>,
         no_norm: bool,
     ) {
-        // builder is shared by reference; store to interior mutability is overkill, so:
         let mut_self: *const Self = self;
         let mut_self = mut_self as *mut Self;
-        let env_ts = std::env::var("SOURCE_DATE_EPOCH").ok().and_then(|s| s.parse::<u64>().ok());
-
+        let env_ts = std::env::var("SOURCE_DATE_EPOCH")
+            .ok()
+            .and_then(|s| s.parse::<u64>().ok());
         unsafe {
             (*mut_self).repro = ReproCfg {
                 deterministic,
@@ -181,8 +172,7 @@ impl<'a> ApkBuilder<'a> {
             )?;
             cargo.arg("check");
             if self.cmd.target().is_none() {
-                let triple = target.rust_triple();
-                cargo.arg("--target").arg(triple);
+                cargo.arg("--target").arg(target.rust_triple());
             }
             self.cmd.args().apply(&mut cargo);
             if !cargo.status()?.success() {
@@ -193,46 +183,39 @@ impl<'a> ApkBuilder<'a> {
     }
 
     pub fn build(&self, artifact: &Artifact) -> Result<Apk, Error> {
-        // Set artifact specific manifest default values.
         let mut manifest = self.manifest.android_manifest.clone();
-
         if manifest.package.is_empty() {
             let name = artifact.name.replace('-', "_");
             manifest.package = match artifact.r#type {
-                ArtifactType::Lib => format!("rust.{name}"),
-                ArtifactType::Bin => format!("rust.{name}"),
+                ArtifactType::Lib | ArtifactType::Bin => format!("rust.{name}"),
                 ArtifactType::Example => format!("rust.example.{name}"),
             };
         }
-
         if manifest.application.label.is_empty() {
             manifest.application.label = artifact.name.to_string();
         }
-
         manifest.application.activity.meta_data.push(MetaData {
             name: "android.app.lib_name".to_string(),
             value: artifact.name.replace('-', "_"),
         });
 
         let crate_path = self.cmd.manifest().parent().expect("invalid manifest path");
-
         let is_debug_profile = *self.cmd.profile() == Profile::Dev;
-
         let assets = self
             .manifest
             .assets
             .as_ref()
-            .map(|assets| dunce::simplified(&crate_path.join(assets)).to_owned());
+            .map(|p| dunce::simplified(&crate_path.join(p)).to_owned());
         let resources = self
             .manifest
             .resources
             .as_ref()
-            .map(|res| dunce::simplified(&crate_path.join(res)).to_owned());
+            .map(|p| dunce::simplified(&crate_path.join(p)).to_owned());
         let runtime_libs = self
             .manifest
             .runtime_libs
             .as_ref()
-            .map(|libs| dunce::simplified(&crate_path.join(libs)).to_owned());
+            .map(|p| dunce::simplified(&crate_path.join(p)).to_owned());
         let apk_name = self
             .manifest
             .apk_name
@@ -249,6 +232,8 @@ impl<'a> ApkBuilder<'a> {
             disable_aapt_compression: is_debug_profile,
             strip: self.manifest.strip,
             reverse_port_forward: self.manifest.reverse_port_forward.clone(),
+
+            // reproducibility
             align: self.repro.align,
             normalize_zip: self.repro.deterministic && !self.repro.no_normalize_zip,
             zip_timestamp: self.repro.ts_unix,
@@ -271,68 +256,26 @@ impl<'a> ApkBuilder<'a> {
                 cargo.arg("--target").arg(triple);
             }
             self.cmd.args().apply(&mut cargo);
-
             if !cargo.status()?.success() {
                 return Err(NdkError::CmdFailed(Box::new(cargo)).into());
             }
 
-            let mut libs_search_paths =
-                get_libs_search_paths(self.cmd.target_dir(), triple, self.cmd.profile().as_ref())?;
+            let mut libs_search_paths = ndk_build::dylibs::get_libs_search_paths(
+                self.cmd.target_dir(),
+                triple,
+                self.cmd.profile().as_ref(),
+            )?;
             libs_search_paths.push(build_dir.join("deps"));
-
             let libs_search_paths = libs_search_paths
                 .iter()
-                .map(|path| path.as_path())
+                .map(|p| p.as_path())
                 .collect::<Vec<_>>();
 
             apk.add_lib_recursively(&artifact, *target, libs_search_paths.as_slice())?;
-
             if let Some(runtime_libs) = &runtime_libs {
                 apk.add_runtime_libs(runtime_libs, *target, libs_search_paths.as_slice())?;
             }
         }
-
-        let profile_name = match self.cmd.profile() {
-            Profile::Dev => "dev",
-            Profile::Release => "release",
-            Profile::Custom(c) => c.as_str(),
-        };
-
-        let keystore_env = format!(
-            "CARGO_APK_{}_KEYSTORE",
-            profile_name.to_uppercase().replace('-', "_")
-        );
-        let password_env = format!("{keystore_env}_PASSWORD");
-
-        let path = std::env::var_os(&keystore_env).map(PathBuf::from);
-        let password = std::env::var(&password_env).ok();
-
-        let signing_key = match (path, password) {
-            (Some(path), Some(password)) => Key { path, password },
-            (Some(path), None) if is_debug_profile => {
-                eprintln!("{password_env} not specified, falling back to default password");
-                Key {
-                    path,
-                    password: ndk_build::ndk::DEFAULT_DEV_KEYSTORE_PASSWORD.to_owned(),
-                }
-            }
-            (Some(path), None) => {
-                eprintln!("`{}` was specified via `{}`, but `{}` was not specified, both or neither must be present for profiles other than `dev`", path.display(), keystore_env, password_env);
-                return Err(Error::MissingReleaseKey(profile_name.to_owned()));
-            }
-            (None, _) => {
-                if let Some(msk) = self.manifest.signing.get(profile_name) {
-                    Key {
-                        path: crate_path.join(&msk.path),
-                        password: msk.keystore_password.clone(),
-                    }
-                } else if is_debug_profile {
-                    self.ndk.debug_key()?
-                } else {
-                    return Err(Error::MissingReleaseKey(profile_name.to_owned()));
-                }
-            }
-        };
 
         let unsigned = apk.add_pending_libs_and_align()?;
 
@@ -341,8 +284,44 @@ impl<'a> ApkBuilder<'a> {
                 "--unsigned set; producing unsigned APK at {}",
                 config.apk().display()
             );
-            return Ok(ndk_build::apk::Apk::from_config(unsigned.));
+            return Ok(ndk_build::apk::Apk::from_config(unsigned.config()));
         }
+
+        // normal signing flow
+        let profile_name = match self.cmd.profile() {
+            Profile::Dev => "dev",
+            Profile::Release => "release",
+            Profile::Custom(c) => c.as_str(),
+        };
+        let keystore_env = format!(
+            "CARGO_APK_{}_KEYSTORE",
+            profile_name.to_uppercase().replace('-', "_")
+        );
+        let password_env = format!("{keystore_env}_PASSWORD");
+        let path = std::env::var_os(&keystore_env).map(PathBuf::from);
+        let password = std::env::var(&password_env).ok();
+        let crate_path = self.cmd.manifest().parent().expect("invalid manifest path");
+        let signing_key = match (path, password) {
+            (Some(path), Some(password)) => Key { path, password },
+            (Some(path), None) if *self.cmd.profile() == Profile::Dev => Key {
+                path,
+                password: ndk_build::ndk::DEFAULT_DEV_KEYSTORE_PASSWORD.to_owned(),
+            },
+            (Some(path), None) => return Err(Error::MissingReleaseKey(profile_name.to_owned())),
+            (None, _) => {
+                if let Some(msk) = self.manifest.signing.get(profile_name) {
+                    Key {
+                        path: crate_path.join(&msk.path),
+                        password: msk.keystore_password.clone(),
+                    }
+                } else if *self.cmd.profile() == Profile::Dev {
+                    self.ndk.debug_key()?
+                } else {
+                    return Err(Error::MissingReleaseKey(profile_name.to_owned()));
+                }
+            }
+        };
+
         println!(
             "Signing `{}` with keystore `{}`",
             config.apk().display(),

@@ -1,11 +1,20 @@
-use std::{
-    io::{Cursor, Read, Write},
-    time::{Duration, UNIX_EPOCH},
+use std::io::{Cursor, Read, Write};
+use zip::{
+    CompressionMethod, DateTime, ZipArchive, ZipWriter,
+    write::{ExtendedFileOptions, FileOptions},
 };
-use zip::{write::FileOptions, CompressionMethod, DateTime, ZipArchive, ZipWriter};
 
-pub fn normalize_zip(data: &[u8], ts: Option<u64>) -> Result<Vec<u8>, std::io::Error> {
-    // Read source
+pub fn normalize_zip_in_place(
+    path: std::path::PathBuf,
+    ts: Option<u64>,
+) -> Result<(), std::io::Error> {
+    let data = std::fs::read(&path)?;
+    let normalized = normalize_zip(&data, ts)?;
+    std::fs::write(&path, normalized)?;
+    Ok(())
+}
+
+pub fn normalize_zip(data: &[u8], _ts: Option<u64>) -> Result<Vec<u8>, std::io::Error> {
     let mut src = ZipArchive::new(Cursor::new(data))?;
 
     // Deterministic order: lexicographic filenames
@@ -14,15 +23,7 @@ pub fn normalize_zip(data: &[u8], ts: Option<u64>) -> Result<Vec<u8>, std::io::E
         .collect::<Result<Vec<_>, _>>()?;
     names.sort();
 
-    // Choose a stable DOS mtime: clamp SOURCE_DATE_EPOCH to >= 1980-01-01; or use 1980-01-01
-    let ts_unix = ts
-        .or_else(|| {
-            std::env::var("SOURCE_DATE_EPOCH")
-                .ok()
-                .and_then(|s| s.parse().ok())
-        })
-        .unwrap_or(315532800); // 1980-01-01 UTC
-    let _ = (UNIX_EPOCH + Duration::from_secs(ts_unix.saturating_sub(315532800))); // keep for clarity
+    // Fixed DOS time (1980-01-01 00:00:00)
     let dos_time = DateTime::from_date_and_time(1980, 1, 1, 0, 0, 0).expect("valid DOS datetime");
 
     let cursor = Cursor::new(Vec::with_capacity(data.len()));
@@ -30,6 +31,7 @@ pub fn normalize_zip(data: &[u8], ts: Option<u64>) -> Result<Vec<u8>, std::io::E
 
     for name in names {
         let mut file = src.by_name(&name)?;
+
         let method = match file.compression() {
             CompressionMethod::Stored => CompressionMethod::Stored,
             _ => CompressionMethod::Deflated,
@@ -38,9 +40,10 @@ pub fn normalize_zip(data: &[u8], ts: Option<u64>) -> Result<Vec<u8>, std::io::E
         let mut buf = Vec::with_capacity(file.size() as usize);
         std::io::copy(&mut file, &mut buf)?;
 
-        let mut opts = FileOptions::default()
+        let mut opts: FileOptions<'_, ExtendedFileOptions> = FileOptions::default()
             .compression_method(method)
             .last_modified_time(dos_time);
+
         if file.size() > 0xFFFF_FFFF {
             opts = opts.large_file(true);
         }
@@ -50,6 +53,5 @@ pub fn normalize_zip(data: &[u8], ts: Option<u64>) -> Result<Vec<u8>, std::io::E
     }
 
     let cursor = writer.finish()?;
-    let out = cursor.into_inner();
-    Ok(out)
+    Ok(cursor.into_inner())
 }

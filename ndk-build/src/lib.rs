@@ -7,7 +7,6 @@ macro_rules! bin {
         }
     };
 }
-
 macro_rules! bat {
     ($bat:expr) => {
         if cfg!(target_os = "windows") {
@@ -17,7 +16,6 @@ macro_rules! bat {
         }
     };
 }
-
 macro_rules! cmd {
     ($cmd:expr) => {
         if cfg!(target_os = "windows") {

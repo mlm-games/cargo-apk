@@ -1,3 +1,4 @@
+use quick_xml::SeError;
 use std::io::Error as IoError;
 use std::num::ParseIntError;
 use std::path::PathBuf;
@@ -18,7 +19,9 @@ pub enum NdkError {
         environment variable."
     )]
     NdkNotFound,
-    #[error("GNU toolchain binary `{gnu_bin}` nor LLVM toolchain binary `{llvm_bin}` found in `{toolchain_path:?}`.")]
+    #[error(
+        "GNU toolchain binary `{gnu_bin}` nor LLVM toolchain binary `{llvm_bin}` found in `{toolchain_path:?}`."
+    )]
     ToolchainBinaryNotFound {
         toolchain_path: PathBuf,
         gnu_bin: String,
@@ -47,7 +50,7 @@ pub enum NdkError {
     #[error("Command `{}` had a non-zero exit code.", format!("{:?}", .0).replace('"', ""))]
     CmdFailed(Box<Command>),
     #[error(transparent)]
-    Serialize(#[from] quick_xml::de::DeError),
+    Serialize(#[from] SeError),
     #[error("String `{1}` is not a UID")]
     NotAUid(#[source] ParseIntError, String),
     #[error("Could not find `package:{package}` in output `{output}`")]

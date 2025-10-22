@@ -16,36 +16,26 @@ pub fn cargo_ndk(
 
     const SEP: &str = "\x1f";
 
-    // Read initial CARGO_ENCODED_/RUSTFLAGS
+    // Read initial CARGO_ENCODED_/RUSTFLAGS into a String
     let mut rustflags = match std::env::var("CARGO_ENCODED_RUSTFLAGS") {
-        Ok(val) => {
-            if std::env::var_os("RUSTFLAGS").is_some() {
-                panic!(
-                    "Both `CARGO_ENCODED_RUSTFLAGS` and `RUSTFLAGS` were found in the environment, please clear one or the other before invoking this script"
-                );
-            }
+        Ok(val) => val,
+        Err(std::env::VarError::NotPresent) => match std::env::var("RUSTFLAGS") {
+            Ok(val) => {
+                cargo.env_remove("RUSTFLAGS");
 
-            val
-        }
-        Err(std::env::VarError::NotPresent) => {
-            match std::env::var("RUSTFLAGS") {
-                Ok(val) => {
-                    cargo.env_remove("RUSTFLAGS");
-
-                    // Same as cargo
-                    // https://github.com/rust-lang/cargo/blob/f6de921a5d807746e972d9d10a4d8e1ca21e1b1f/src/cargo/core/compiler/build_context/target_info.rs#L682-L690
-                    val.split(' ')
-                        .map(str::trim)
-                        .filter(|s| !s.is_empty())
-                        .collect::<Vec<_>>()
-                        .join(SEP)
-                }
-                Err(std::env::VarError::NotPresent) => String::new(),
-                Err(std::env::VarError::NotUnicode(_)) => {
-                    panic!("RUSTFLAGS environment variable contains non-unicode characters")
-                }
+                // Same as cargo
+                // https://github.com/rust-lang/cargo/blob/f6de921a5d807746e972d9d10a4d8e1ca21e1b1f/src/cargo/core/compiler/build_context/target_info.rs#L682-L690
+                val.split(' ')
+                    .map(str::trim)
+                    .filter(|s| !s.is_empty())
+                    .collect::<Vec<_>>()
+                    .join(SEP)
             }
-        }
+            Err(std::env::VarError::NotPresent) => String::new(),
+            Err(std::env::VarError::NotUnicode(_)) => {
+                panic!("RUSTFLAGS environment variable contains non-unicode characters")
+            }
+        },
         Err(std::env::VarError::NotUnicode(_)) => {
             panic!("CARGO_ENCODED_RUSTFLAGS environment variable contains non-unicode characters")
         }
@@ -105,52 +95,42 @@ pub fn cargo_ndk(
         );
     }
 
-    cargo.env("CARGO_ENCODED_RUSTFLAGS", rustflags);
-
     if std::env::var("CARGO_APK_DETERMINISTIC").ok().as_deref() == Some("1") {
-        let mut more = String::new();
-        const SEP: &str = "\x1f";
         let pwd = std::env::current_dir().ok();
         let cargo_home = std::env::var("CARGO_HOME")
             .ok()
             .or_else(|| std::env::var("HOME").ok().map(|h| format!("{h}/.cargo")));
-        if let Some(pwd) = pwd {
-            more.push_str("--remap-path-prefix=");
-            more.push_str(pwd.to_str().unwrap());
-            more.push_str("=/src");
-            more.push_str(SEP);
+        if !rustflags.is_empty() {
+            rustflags.push_str(SEP);
+        }
+        if let Some(p) = pwd {
+            rustflags.push_str("--remap-path-prefix=");
+            rustflags.push_str(p.to_str().unwrap());
+            rustflags.push_str("=/src");
+            rustflags.push_str(SEP);
         }
         if let Some(ch) = cargo_home {
-            more.push_str("--remap-path-prefix=");
-            more.push_str(&ch);
-            more.push_str("=/cargo-home");
-            more.push_str(SEP);
+            rustflags.push_str("--remap-path-prefix=");
+            rustflags.push_str(&ch);
+            rustflags.push_str("=/cargo-home");
+            rustflags.push_str(SEP);
         }
-        more.push_str("-Cdebuginfo=0");
-        more.push_str(SEP);
-        more.push_str("-Clink-arg=-Wl,--build-id=none");
-        more.push_str(SEP);
-        more.push_str("-Ccodegen-units=1");
-
-        let merged = match std::env::var("CARGO_ENCODED_RUSTFLAGS") {
-            Ok(mut v) => {
-                v.push_str(SEP);
-                v.push_str(&more);
-                v
-            }
-            Err(_) => more,
-        };
-        cargo.env("CARGO_ENCODED_RUSTFLAGS", merged);
+        rustflags.push_str("-Cdebuginfo=0");
+        rustflags.push_str(SEP);
+        rustflags.push_str("-Clink-arg=-Wl,--build-id=none");
+        rustflags.push_str(SEP);
+        rustflags.push_str("-Ccodegen-units=1");
         cargo.env("CARGO_INCREMENTAL", "0");
     }
 
+    // Set env exactly once, after all edits
+    cargo.env("CARGO_ENCODED_RUSTFLAGS", rustflags);
     Ok(cargo)
 }
 
 fn cargo_env_target_cfg(tool: &str, target: &str) -> String {
     let utarget = target.replace('-', "_");
-    let env = format!("CARGO_TARGET_{}_{}", &utarget, tool);
-    env.to_uppercase()
+    format!("CARGO_TARGET_{}_{}", &utarget, tool).to_uppercase()
 }
 
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]

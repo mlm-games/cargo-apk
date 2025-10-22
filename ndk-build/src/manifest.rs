@@ -55,9 +55,8 @@ impl Default for AndroidManifest {
 
 impl AndroidManifest {
     pub fn write_to(&self, dir: &Path) -> Result<(), NdkError> {
-        let file = File::create(dir.join("AndroidManifest.xml"))?;
-        let w = std::io::BufWriter::new(file);
-        quick_xml::se::to_writer(w, &self)?;
+        let xml = quick_xml::se::to_string(&self).map_err(|e| NdkError::Serialize(e))?;
+        std::fs::write(dir.join("AndroidManifest.xml"), xml.as_bytes())?;
         Ok(())
     }
 }

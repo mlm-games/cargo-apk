@@ -27,6 +27,8 @@ struct Args {
     /// Use device with the given serial (see `adb devices`)
     #[clap(short, long)]
     device: Option<String>,
+
+    // Reproducibility knobs
     /// Enable deterministic (reproducible) build settings
     #[clap(long, env = "CARGO_APK_DETERMINISTIC")]
     deterministic: bool,
@@ -110,7 +112,6 @@ fn split_apk_and_cargo_args(input: Vec<String>) -> (Args, Vec<String>) {
                         .flat_map(|longs| longs.iter().map(|short| format!("--{short}"))),
                 )
                 .map(|arg_str| (arg_str, arg.get_action().takes_values()))
-                // Collect to prevent lifetime issues on temporaries created above
                 .collect::<Vec<_>>()
         })
         .collect::<HashMap<_, _>>();
@@ -127,12 +128,10 @@ fn split_apk_and_cargo_args(input: Vec<String>) -> (Args, Vec<String>) {
         .fold(SplitArgs::default(), |mut split_args, elem| {
             let known_arg = known_args_taking_value.get(&elem);
             if known_arg.is_some() || split_args.next_takes_value {
-                // Recognized arg or value for previously recognized arg
                 split_args.apk_args.push(elem)
             } else {
                 split_args.cargo_args.push(elem)
             }
-
             split_args.next_takes_value = known_arg.copied().unwrap_or(false);
             split_args
         });
@@ -155,9 +154,11 @@ fn iterator_single_item<T>(mut iter: impl Iterator<Item = T>) -> Option<T> {
 
 fn main() -> anyhow::Result<()> {
     env_logger::init();
+
     let Cmd {
         apk: ApkCmd::Apk { cmd },
     } = Cmd::parse();
+
     match cmd {
         ApkSubCmd::Check { args } => {
             let cmd = Subcommand::new(args.subcommand_args)?;
@@ -190,20 +191,40 @@ fn main() -> anyhow::Result<()> {
             cargo_args,
         } => {
             let (args, cargo_args) = split_apk_and_cargo_args(cargo_args);
-
             let cmd = Subcommand::new(args.subcommand_args)?;
             let builder = ApkBuilder::from_subcommand(&cmd, args.device)?;
+            builder.set_repro_flags(
+                args.deterministic,
+                args.unsigned,
+                args.align,
+                args.timestamp,
+                args.no_normalize_zip,
+            );
             builder.default(&cargo_cmd, &cargo_args)?;
         }
         ApkSubCmd::Run { args, no_logcat } => {
             let cmd = Subcommand::new(args.subcommand_args)?;
             let builder = ApkBuilder::from_subcommand(&cmd, args.device)?;
+            builder.set_repro_flags(
+                args.deterministic,
+                args.unsigned,
+                args.align,
+                args.timestamp,
+                args.no_normalize_zip,
+            );
             let artifact = iterator_single_item(cmd.artifacts()).ok_or(Error::invalid_args())?;
             builder.run(artifact, no_logcat)?;
         }
         ApkSubCmd::Gdb { args } => {
             let cmd = Subcommand::new(args.subcommand_args)?;
             let builder = ApkBuilder::from_subcommand(&cmd, args.device)?;
+            builder.set_repro_flags(
+                args.deterministic,
+                args.unsigned,
+                args.align,
+                args.timestamp,
+                args.no_normalize_zip,
+            );
             let artifact = iterator_single_item(cmd.artifacts()).ok_or(Error::invalid_args())?;
             builder.gdb(artifact)?;
         }
@@ -218,9 +239,8 @@ fn main() -> anyhow::Result<()> {
 fn test_split_apk_and_cargo_args() {
     // Set up a default because cargo-subcommand doesn't derive a default
     let args_default = Args::parse_from(std::iter::empty::<&str>());
-
     assert_eq!(
-        split_apk_and_cargo_args(vec!["--quiet".to_string()]),
+        split_apk_and_cargo_args(vec!["--quiet".into()]),
         (
             Args {
                 subcommand_args: cargo_subcommand::Args {
@@ -310,7 +330,7 @@ fn test_split_apk_and_cargo_args() {
                     package: vec!["foo".to_string()],
                     ..args_default.subcommand_args.clone()
                 },
-                ..args_default
+                ..args_default.clone()
             },
             vec!["--no-deps".to_string(), "--unrecognized".to_string()]
         )

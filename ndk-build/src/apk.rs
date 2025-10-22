@@ -2,8 +2,7 @@ use crate::error::NdkError;
 use crate::manifest::AndroidManifest;
 use crate::ndk::{Key, Ndk};
 use crate::target::Target;
-use std::collections::HashMap;
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::ffi::OsStr;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -77,6 +76,7 @@ impl ApkConfig {
             .sdk
             .target_sdk_version
             .unwrap_or_else(|| self.ndk.default_target_platform());
+
         let mut aapt = self.build_tool(bin!("aapt"))?;
         aapt.arg("package")
             .arg("-f")
@@ -200,27 +200,29 @@ impl<'a> UnalignedApk<'a> {
     }
 
     pub fn add_pending_libs_and_align(self) -> Result<UnsignedApk<'a>, NdkError> {
+        // add libs in stable order
         let mut aapt = self.config.build_tool(bin!("aapt"))?;
         aapt.arg("add");
-
         if self.config.disable_aapt_compression {
             aapt.arg("-0").arg("");
         }
-
         aapt.arg(self.config.unaligned_apk());
-
         let mut libs: Vec<_> = self.pending_libs.into_iter().collect();
         libs.sort();
         for lib_path_unix in libs {
             aapt.arg(lib_path_unix);
         }
-
         if !aapt.status()?.success() {
             return Err(NdkError::CmdFailed(Box::new(aapt)));
         }
 
+        // normalize zip before zipalign so offsets remain stable
         if self.config.normalize_zip {
-            normalize_zip_in_place(self.config.unaligned_apk(), self.config.zip_timestamp)?;
+            super::zipnorm::normalize_zip_in_place(
+                self.config.unaligned_apk(),
+                self.config.zip_timestamp,
+            )
+            .map_err(|e| NdkError::IoPathError(self.config.unaligned_apk(), e))?;
         }
 
         let mut zipalign = self.config.build_tool(bin!("zipalign"))?;
@@ -230,7 +232,6 @@ impl<'a> UnalignedApk<'a> {
             .arg(self.config.align.to_string())
             .arg(self.config.unaligned_apk())
             .arg(self.config.apk());
-
         if !zipalign.status()?.success() {
             return Err(NdkError::CmdFailed(Box::new(zipalign)));
         }
@@ -251,8 +252,11 @@ fn normalize_zip_in_place(path: PathBuf, ts: Option<u64>) -> Result<(), NdkError
 }
 
 pub struct UnsignedApk<'a>(&'a ApkConfig);
-
 impl<'a> UnsignedApk<'a> {
+    pub fn config(&self) -> &'a ApkConfig {
+        self.0
+    }
+
     pub fn sign(self, key: Key) -> Result<Apk, NdkError> {
         let mut apksigner = self.0.build_tool(bat!("apksigner"))?;
         apksigner
