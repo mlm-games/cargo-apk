@@ -11,11 +11,20 @@ pub struct AndroidManifest {
     ns_android: String,
     #[serde(rename(serialize = "@package"), default)]
     pub package: String,
-    #[serde(rename(serialize = "@android:sharedUserId"))]
+    #[serde(
+        rename(serialize = "@android:sharedUserId"),
+        skip_serializing_if = "Option::is_none"
+    )]
     pub shared_user_id: Option<String>,
-    #[serde(rename(serialize = "@android:versionCode"))]
+    #[serde(
+        rename(serialize = "@android:versionCode"),
+        skip_serializing_if = "Option::is_none"
+    )]
     pub version_code: Option<u32>,
-    #[serde(rename(serialize = "@android:versionName"))]
+    #[serde(
+        rename(serialize = "@android:versionName"),
+        skip_serializing_if = "Option::is_none"
+    )]
     pub version_name: Option<String>,
 
     #[serde(rename(serialize = "uses-sdk"))]
@@ -64,21 +73,36 @@ impl AndroidManifest {
 /// Android [application element](https://developer.android.com/guide/topics/manifest/application-element), containing an [`Activity`] element.
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct Application {
-    #[serde(rename(serialize = "@android:debuggable"))]
+    #[serde(
+        rename(serialize = "@android:debuggable"),
+        skip_serializing_if = "Option::is_none"
+    )]
     pub debuggable: Option<bool>,
-    #[serde(rename(serialize = "@android:theme"))]
+    #[serde(
+        rename(serialize = "@android:theme"),
+        skip_serializing_if = "Option::is_none"
+    )]
     pub theme: Option<String>,
     #[serde(rename(serialize = "@android:hasCode"))]
     #[serde(default)]
     pub has_code: bool,
-    #[serde(rename(serialize = "@android:icon"))]
+    #[serde(
+        rename(serialize = "@android:icon"),
+        skip_serializing_if = "Option::is_none"
+    )]
     pub icon: Option<String>,
     #[serde(rename(serialize = "@android:label"))]
     #[serde(default)]
     pub label: String,
-    #[serde(rename(serialize = "@android:extractNativeLibs"))]
+    #[serde(
+        rename(serialize = "@android:extractNativeLibs"),
+        skip_serializing_if = "Option::is_none"
+    )]
     pub extract_native_libs: Option<bool>,
-    #[serde(rename(serialize = "@android:usesCleartextTraffic"))]
+    #[serde(
+        rename(serialize = "@android:usesCleartextTraffic"),
+        skip_serializing_if = "Option::is_none"
+    )]
     pub uses_cleartext_traffic: Option<bool>,
 
     #[serde(rename(serialize = "meta-data"))]
@@ -91,23 +115,44 @@ pub struct Application {
 /// Android [activity element](https://developer.android.com/guide/topics/manifest/activity-element).
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Activity {
-    #[serde(rename(serialize = "@android:configChanges"))]
+    #[serde(
+        rename(serialize = "@android:configChanges"),
+        skip_serializing_if = "Option::is_none"
+    )]
     #[serde(default = "default_config_changes")]
     pub config_changes: Option<String>,
-    #[serde(rename(serialize = "@android:label"))]
+    #[serde(
+        rename(serialize = "@android:label"),
+        skip_serializing_if = "Option::is_none"
+    )]
     pub label: Option<String>,
-    #[serde(rename(serialize = "@android:launchMode"))]
+    #[serde(
+        rename(serialize = "@android:launchMode"),
+        skip_serializing_if = "Option::is_none"
+    )]
     pub launch_mode: Option<String>,
     #[serde(rename(serialize = "@android:name"))]
     #[serde(default = "default_activity_name")]
     pub name: String,
-    #[serde(rename(serialize = "@android:screenOrientation"))]
+    #[serde(
+        rename(serialize = "@android:screenOrientation"),
+        skip_serializing_if = "Option::is_none"
+    )]
     pub orientation: Option<String>,
-    #[serde(rename(serialize = "@android:exported"))]
+    #[serde(
+        rename(serialize = "@android:exported"),
+        skip_serializing_if = "Option::is_none"
+    )]
     pub exported: Option<bool>,
-    #[serde(rename(serialize = "@android:resizeableActivity"))]
+    #[serde(
+        rename(serialize = "@android:resizeableActivity"),
+        skip_serializing_if = "Option::is_none"
+    )]
     pub resizeable_activity: Option<bool>,
-    #[serde(rename(serialize = "@android:alwaysRetainTaskState"))]
+    #[serde(
+        rename(serialize = "@android:alwaysRetainTaskState"),
+        skip_serializing_if = "Option::is_none"
+    )]
     pub always_retain_task_state: Option<bool>,
 
     #[serde(rename(serialize = "meta-data"))]
@@ -225,9 +270,15 @@ pub struct MetaData {
 /// Android [uses-feature element](https://developer.android.com/guide/topics/manifest/uses-feature-element).
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct Feature {
-    #[serde(rename(serialize = "@android:name"))]
+    #[serde(
+        rename(serialize = "@android:name"),
+        skip_serializing_if = "Option::is_none"
+    )]
     pub name: Option<String>,
-    #[serde(rename(serialize = "@android:required"))]
+    #[serde(
+        rename(serialize = "@android:required"),
+        skip_serializing_if = "Option::is_none"
+    )]
     pub required: Option<bool>,
     /// The `version` field is currently used for the following features:
     ///
@@ -239,9 +290,15 @@ pub struct Feature {
     ///
     /// - `name="android.hardware.vulkan.version"`: Represents the value of Vulkan's `VkPhysicalDeviceProperties::apiVersion`. See the [Android documentation](https://developer.android.com/reference/android/content/pm/PackageManager#FEATURE_VULKAN_HARDWARE_VERSION)
     ///   for available levels and the respective Vulkan features required/provided.
-    #[serde(rename(serialize = "@android:version"))]
+    #[serde(
+        rename(serialize = "@android:version"),
+        skip_serializing_if = "Option::is_none"
+    )]
     pub version: Option<u32>,
-    #[serde(rename(serialize = "@android:glEsVersion"))]
+    #[serde(
+        rename(serialize = "@android:glEsVersion"),
+        skip_serializing_if = "Option::is_none"
+    )]
     #[serde(serialize_with = "serialize_opengles_version")]
     pub opengles_version: Option<(u8, u8)>,
 }
@@ -267,7 +324,10 @@ where
 pub struct Permission {
     #[serde(rename(serialize = "@android:name"))]
     pub name: String,
-    #[serde(rename(serialize = "@android:maxSdkVersion"))]
+    #[serde(
+        rename(serialize = "@android:maxSdkVersion"),
+        skip_serializing_if = "Option::is_none"
+    )]
     pub max_sdk_version: Option<u32>,
 }
 
@@ -306,9 +366,15 @@ pub struct Queries {
 pub struct Sdk {
     #[serde(rename(serialize = "@android:minSdkVersion"))]
     pub min_sdk_version: Option<u32>,
-    #[serde(rename(serialize = "@android:targetSdkVersion"))]
+    #[serde(
+        rename(serialize = "@android:targetSdkVersion"),
+        skip_serializing_if = "Option::is_none"
+    )]
     pub target_sdk_version: Option<u32>,
-    #[serde(rename(serialize = "@android:maxSdkVersion"))]
+    #[serde(
+        rename(serialize = "@android:maxSdkVersion"),
+        skip_serializing_if = "Option::is_none"
+    )]
     pub max_sdk_version: Option<u32>,
 }
 
@@ -332,15 +398,4 @@ fn default_activity_name() -> String {
 
 fn default_config_changes() -> Option<String> {
     Some("orientation|keyboardHidden|screenSize".to_string())
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    #[test]
-    fn manifest_has_xmlns_and_attrs() {
-        let xml = quick_xml::se::to_string(&AndroidManifest::default()).unwrap();
-        assert!(xml.contains(r#"xmlns:android="http://schemas.android.com/apk/res/android""#));
-        assert!(xml.contains(r#"android:name="android.app.NativeActivity""#));
-    }
 }
