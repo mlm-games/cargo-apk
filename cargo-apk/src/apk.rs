@@ -42,6 +42,17 @@ pub struct ApkBuilder<'a> {
 }
 
 impl<'a> ApkBuilder<'a> {
+    fn apply_deterministic_env(&self) {
+        if self.repro.deterministic {
+            // Required so cargo_ndk() enables reproducible settings always
+            unsafe { std::env::set_var("CARGO_APK_DETERMINISTIC", "1") };
+            if let Some(ts) = self.repro.ts_unix {
+                unsafe { std::env::set_var("SOURCE_DATE_EPOCH", ts.to_string()) };
+            }
+        } else {
+            unsafe { std::env::remove_var("CARGO_APK_DETERMINISTIC") };
+        }
+    }
     pub fn from_subcommand(
         cmd: &'a Subcommand,
         device_serial: Option<String>,
@@ -178,6 +189,7 @@ impl<'a> ApkBuilder<'a> {
     }
 
     pub fn check(&self) -> Result<(), Error> {
+        self.apply_deterministic_env();
         for target in &self.build_targets {
             let mut cargo = cargo_ndk(
                 &self.ndk,
@@ -198,6 +210,7 @@ impl<'a> ApkBuilder<'a> {
     }
 
     pub fn build(&self, artifact: &Artifact) -> Result<Apk, Error> {
+        self.apply_deterministic_env();
         let mut manifest = self.manifest.android_manifest.clone();
         if manifest.package.is_empty() {
             let name = artifact.name.replace('-', "_");
@@ -346,6 +359,7 @@ impl<'a> ApkBuilder<'a> {
     }
 
     pub fn run(&self, artifact: &Artifact, no_logcat: bool) -> Result<(), Error> {
+        self.apply_deterministic_env();
         let apk = self.build(artifact)?;
         apk.reverse_port_forwarding(self.device_serial.as_deref())?;
         apk.install(self.device_serial.as_deref())?;
@@ -367,6 +381,7 @@ impl<'a> ApkBuilder<'a> {
     }
 
     pub fn gdb(&self, artifact: &Artifact) -> Result<(), Error> {
+        self.apply_deterministic_env();
         let apk = self.build(artifact)?;
         apk.install(self.device_serial.as_deref())?;
 
@@ -380,6 +395,7 @@ impl<'a> ApkBuilder<'a> {
     }
 
     pub fn default(&self, cargo_cmd: &str, cargo_args: &[String]) -> Result<(), Error> {
+        self.apply_deterministic_env();
         for target in &self.build_targets {
             let mut cargo = cargo_ndk(
                 &self.ndk,
