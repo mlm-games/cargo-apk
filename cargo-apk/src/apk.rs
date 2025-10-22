@@ -24,7 +24,7 @@ impl Default for ReproCfg {
         Self {
             deterministic: false,
             unsigned: false,
-            align: 4,
+            align: 16,
             ts_unix: None,
             no_normalize_zip: false,
         }
