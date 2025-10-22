@@ -4,6 +4,8 @@ use zip::{
     write::{ExtendedFileOptions, FileOptions},
 };
 
+/// Normalize a ZIP: set deterministic mtimes, strip variable extra fields, and
+/// write entries in lexicographic order for both local headers and central dir.
 pub fn normalize_zip_in_place(
     path: std::path::PathBuf,
     ts: Option<u64>,

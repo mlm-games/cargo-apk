@@ -67,7 +67,7 @@ impl ApkConfig {
         self.build_dir.join(format!("{}.apk", self.apk_name))
     }
 
-    pub fn create_apk(&self) -> Result<UnalignedApk, NdkError> {
+    pub fn create_apk(&self) -> Result<UnalignedApk<'_>, NdkError> {
         std::fs::create_dir_all(&self.build_dir)?;
         self.manifest.write_to(&self.build_dir)?;
 
@@ -238,17 +238,6 @@ impl<'a> UnalignedApk<'a> {
 
         Ok(UnsignedApk(self.config))
     }
-}
-
-/// Normalize a ZIP: set deterministic mtimes, strip variable extra fields, and
-/// write entries in lexicographic order for both local headers and central dir.
-fn normalize_zip_in_place(path: PathBuf, ts: Option<u64>) -> Result<(), NdkError> {
-    use std::fs;
-    let data = fs::read(&path)?;
-    let normalized = crate::zipnorm::normalize_zip(&data, ts)
-        .map_err(|e| NdkError::IoPathError(path.clone(), e))?;
-    fs::write(&path, normalized)?;
-    Ok(())
 }
 
 pub struct UnsignedApk<'a>(&'a ApkConfig);

@@ -9,13 +9,26 @@ use ndk_build::ndk::{Key, Ndk};
 use ndk_build::target::Target;
 use std::path::PathBuf;
 
-#[derive(Clone, Copy, Default)]
+#[derive(Clone, Copy)]
 struct ReproCfg {
     deterministic: bool,
     unsigned: bool,
     align: u32,
     ts_unix: Option<u64>,
     no_normalize_zip: bool,
+}
+
+// Ensure a sane default alignment for zipalign.
+impl Default for ReproCfg {
+    fn default() -> Self {
+        Self {
+            deterministic: false,
+            unsigned: false,
+            align: 4,
+            ts_unix: None,
+            no_normalize_zip: false,
+        }
+    }
 }
 
 pub struct ApkBuilder<'a> {
