@@ -226,9 +226,25 @@ impl<'a> UnalignedApk<'a> {
         }
 
         let mut zipalign = self.config.build_tool(bin!("zipalign"))?;
+        zipalign.arg("-f").arg("-v");
+
+        // overridden with CARGO_APK_PAGE_SIZE_KB (allowed values per zipalign: 4, 16, 64).
+        // Requires Build-Tools >= 35.0.0.
+        let page_size_kb = std::env::var("CARGO_APK_PAGE_SIZE_KB")
+            .ok()
+            .and_then(|s| s.parse::<u32>().ok())
+            .unwrap_or(16);
+        let bt_ver = self.config.ndk.build_tools_version();
+        if bt_ver >= "35.0.0" {
+            zipalign.arg("-P").arg(page_size_kb.to_string());
+        } else {
+            eprintln!(
+                "zipalign -P requires Build-Tools >= 35.0.0 (found {}); continuing without -P",
+                bt_ver
+            );
+        }
+
         zipalign
-            .arg("-f")
-            .arg("-v")
             .arg(self.config.align.to_string())
             .arg(self.config.unaligned_apk())
             .arg(self.config.apk());
