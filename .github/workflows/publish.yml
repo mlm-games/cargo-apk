@@ -7,7 +7,7 @@ on:
 
 jobs:
   Publish:
-    if: github.repository_owner == 'rust-mobile'
+    if: github.repository_owner == 'mlm-games'
     runs-on: ubuntu-latest
     strategy:
       max-parallel: 1 # ensure crate order

@@ -1,10 +1,10 @@
 # Create Android packages (APKs) from native Rust crates
 
-[![Actions Status](https://github.com/rust-mobile/cargo-rapk/actions/workflows/rust.yml/badge.svg)](https://github.com/rust-mobile/cargo-rapk/actions)
+[![Actions Status](https://github.com/mlm-games/cargo-rapk/actions/workflows/rust.yml/badge.svg)](https://github.com/mlm-games/cargo-rapk/actions)
 [![Latest version](https://img.shields.io/crates/v/cargo-rapk.svg?logo=rust)](https://crates.io/crates/cargo-rapk)
 [![MSRV](https://img.shields.io/badge/rustc-1.70.0+-ab6000.svg)](https://blog.rust-lang.org/2023/06/01/Rust-1.70.0.html)
 [![Documentation](https://docs.rs/cargo-rapk/badge.svg)](https://docs.rs/cargo-rapk)
-[![Lines of code](https://tokei.rs/b1/github/rust-mobile/cargo-rapk)](https://github.com/rust-mobile/cargo-rapk)
+[![Lines of code](https://tokei.rs/b1/github/mlm-games/cargo-rapk)](https://github.com/mlm-games/cargo-rapk)
 ![MIT](https://img.shields.io/badge/License-MIT-green.svg)
 ![Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-green.svg)
 

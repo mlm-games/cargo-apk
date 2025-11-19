@@ -1,14 +1,14 @@
 [package]
 name = "cargo-rapk"
 version = "0.12.0"
-authors = ["The Rust Windowing contributors"]            #OAuthors
+authors = ["The Rust Windowing contributors"]          #OAuthors
 edition = "2024"
 description = "Helps cargo build APKs"
 license = "MIT OR Apache-2.0"
 keywords = ["android", "ndk", "apk"]
 documentation = "https://docs.rs/cargo-rapk"
-homepage = "https://github.com/rust-mobile/cargo-rapk"
-repository = "https://github.com/rust-mobile/cargo-rapk"
+homepage = "https://github.com/mlm-games/cargo-rapk"
+repository = "https://github.com/mlm-games/cargo-rapk"
 rust-version = "1.85"
 
 [dependencies]

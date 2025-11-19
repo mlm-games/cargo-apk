@@ -2,9 +2,9 @@
 
 # 0.10.0 (2023-11-30)
 
-- Add `android:extractNativeLibs`, `android:usesCleartextTraffic` attributes to the manifest's `Application` element, and `android:alwaysRetainTaskState` to the `Activity` element. ([#15](https://github.com/rust-mobile/cargo-rapk/pull/15))
-- Enable building from `android` host. ([#29](https://github.com/rust-mobile/cargo-rapk/pull/29))
-- Use app `uid` instead of `pid` to limit `logcat` output to the current app. ([#33](https://github.com/rust-mobile/cargo-rapk/pull/33))
+- Add `android:extractNativeLibs`, `android:usesCleartextTraffic` attributes to the manifest's `Application` element, and `android:alwaysRetainTaskState` to the `Activity` element. ([#15](https://github.com/mlm-games/cargo-rapk/pull/15))
+- Enable building from `android` host. ([#29](https://github.com/mlm-games/cargo-rapk/pull/29))
+- Use app `uid` instead of `pid` to limit `logcat` output to the current app. ([#33](https://github.com/mlm-games/cargo-rapk/pull/33))
 
 # 0.9.0 (2022-11-23)
 

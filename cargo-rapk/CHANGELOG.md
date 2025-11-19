@@ -5,15 +5,15 @@
 # 0.10.0 (2023-11-30)
 
 - Bump MSRV to 1.70 to reflect dependency updates.
-- Bump `rndk` to [`0.10.0`](https://github.com/rust-mobile/cargo-rapk/releases/tag/rndk-0.10.0) with various fixes:
+- Bump `rndk` to [`0.10.0`](https://github.com/mlm-games/cargo-rapk/releases/tag/rndk-0.10.0) with various fixes:
   - Improved log filtering based on UID instead of PID;
   - Support for building APKs from an Android host;
   - More manifest attributes are now supported on the `Application` and `Activity` elements.
-- Improved artifacts based on https://github.com/rust-mobile/cargo-subcommand/pull/17 to support renames of `[lib]`, `[[bin]]` and `[[example]]`. ([#26](https://github.com/rust-mobile/cargo-rapk/pull/26))
+- Improved artifacts based on https://github.com/mlm-games/cargo-subcommand/pull/17 to support renames of `[lib]`, `[[bin]]` and `[[example]]`. ([#26](https://github.com/mlm-games/cargo-rapk/pull/26))
 
 # 0.9.7 (2022-12-12)
 
-- Reimplement default package selection based on `$PWD` or `--manifest-path` by upgrading to [`cargo-subcommand 0.11.0`](https://github.com/rust-mobile/cargo-subcommand/releases/tag/0.11.0). ([#4](https://github.com/rust-mobile/cargo-rapk/pull/4))
+- Reimplement default package selection based on `$PWD` or `--manifest-path` by upgrading to [`cargo-subcommand 0.11.0`](https://github.com/mlm-games/cargo-subcommand/releases/tag/0.11.0). ([#4](https://github.com/mlm-games/cargo-rapk/pull/4))
 - Removed known-arg parsing from `cargo apk --` to not make argument flags/values get lost, see also [#375](https://github.com/rust-windowing/android-ndk-rs/issues/375). ([#377](https://github.com/rust-windowing/android-ndk-rs/pull/377))
 
 # 0.9.6 (2022-11-23)
