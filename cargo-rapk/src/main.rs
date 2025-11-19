@@ -1,21 +1,21 @@
 use std::collections::HashMap;
 
-use cargo_apk::{ApkBuilder, Error};
+use cargo_rapk::{ApkBuilder, Error};
 use cargo_subcommand::Subcommand;
 use clap::{CommandFactory, FromArgMatches, Parser};
 
 #[derive(Parser)]
 struct Cmd {
     #[clap(subcommand)]
-    apk: ApkCmd,
+    apk: RapkCmd,
 }
 
 #[derive(clap::Subcommand)]
-enum ApkCmd {
+enum RapkCmd {
     /// Helps cargo build apks for Android
-    Apk {
+    Rapk {
         #[clap(subcommand)]
-        cmd: ApkSubCmd,
+        cmd: RapkSubCmd,
     },
 }
 
@@ -47,7 +47,7 @@ struct Args {
 }
 
 #[derive(clap::Subcommand)]
-enum ApkSubCmd {
+enum RapkSubCmd {
     /// Analyze the current package and report errors, but don't build object files nor an apk
     #[clap(visible_alias = "c")]
     Check {
@@ -156,11 +156,11 @@ fn main() -> anyhow::Result<()> {
     env_logger::init();
 
     let Cmd {
-        apk: ApkCmd::Apk { cmd },
+        apk: RapkCmd::Rapk { cmd },
     } = Cmd::parse();
 
     match cmd {
-        ApkSubCmd::Check { args } => {
+        RapkSubCmd::Check { args } => {
             let cmd = Subcommand::new(args.subcommand_args)?;
             let mut builder = ApkBuilder::from_subcommand(&cmd, args.device)?;
             builder.set_repro_flags(
@@ -172,7 +172,7 @@ fn main() -> anyhow::Result<()> {
             );
             builder.check()?;
         }
-        ApkSubCmd::Build { args } => {
+        RapkSubCmd::Build { args } => {
             let cmd = Subcommand::new(args.subcommand_args)?;
             let mut builder = ApkBuilder::from_subcommand(&cmd, args.device)?;
             builder.set_repro_flags(
@@ -186,7 +186,7 @@ fn main() -> anyhow::Result<()> {
                 builder.build(artifact)?;
             }
         }
-        ApkSubCmd::Ndk {
+        RapkSubCmd::Ndk {
             cargo_cmd,
             cargo_args,
         } => {
@@ -202,7 +202,7 @@ fn main() -> anyhow::Result<()> {
             );
             builder.default(&cargo_cmd, &cargo_args)?;
         }
-        ApkSubCmd::Run { args, no_logcat } => {
+        RapkSubCmd::Run { args, no_logcat } => {
             let cmd = Subcommand::new(args.subcommand_args)?;
             let mut builder = ApkBuilder::from_subcommand(&cmd, args.device)?;
             builder.set_repro_flags(
@@ -215,7 +215,7 @@ fn main() -> anyhow::Result<()> {
             let artifact = iterator_single_item(cmd.artifacts()).ok_or(Error::invalid_args())?;
             builder.run(artifact, no_logcat)?;
         }
-        ApkSubCmd::Gdb { args } => {
+        RapkSubCmd::Gdb { args } => {
             let cmd = Subcommand::new(args.subcommand_args)?;
             let mut builder = ApkBuilder::from_subcommand(&cmd, args.device)?;
             builder.set_repro_flags(
@@ -228,7 +228,7 @@ fn main() -> anyhow::Result<()> {
             let artifact = iterator_single_item(cmd.artifacts()).ok_or(Error::invalid_args())?;
             builder.gdb(artifact)?;
         }
-        ApkSubCmd::Version => {
+        RapkSubCmd::Version => {
             println!("{} {}", env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"));
         }
     }

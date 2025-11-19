@@ -1,12 +1,12 @@
 use crate::error::Error;
 use crate::manifest::{Inheritable, Manifest, Root};
 use cargo_subcommand::{Artifact, ArtifactType, CrateType, Profile, Subcommand};
-use ndk_build::apk::{Apk, ApkConfig};
-use ndk_build::cargo::{VersionCode, cargo_ndk};
-use ndk_build::error::NdkError;
-use ndk_build::manifest::{IntentFilter, MetaData};
-use ndk_build::ndk::{Key, Ndk};
-use ndk_build::target::Target;
+use rndk::apk::{Apk, ApkConfig};
+use rndk::cargo::{VersionCode, cargo_ndk};
+use rndk::error::NdkError;
+use rndk::manifest::{IntentFilter, MetaData};
+use rndk::ndk::{Key, Ndk};
+use rndk::target::Target;
 use std::path::PathBuf;
 
 #[derive(Clone, Copy)]
@@ -288,7 +288,7 @@ impl<'a> ApkBuilder<'a> {
                 return Err(NdkError::CmdFailed(Box::new(cargo)).into());
             }
 
-            let mut libs_search_paths = ndk_build::dylibs::get_libs_search_paths(
+            let mut libs_search_paths = rndk::dylibs::get_libs_search_paths(
                 self.cmd.target_dir(),
                 triple,
                 self.cmd.profile().as_ref(),
@@ -312,7 +312,7 @@ impl<'a> ApkBuilder<'a> {
                 "--unsigned set; producing unsigned APK at {}",
                 config.apk().display()
             );
-            return Ok(ndk_build::apk::Apk::from_config(unsigned.config()));
+            return Ok(rndk::apk::Apk::from_config(unsigned.config()));
         }
 
         // normal signing flow
@@ -333,7 +333,7 @@ impl<'a> ApkBuilder<'a> {
             (Some(path), Some(password)) => Key { path, password },
             (Some(path), None) if *self.cmd.profile() == Profile::Dev => Key {
                 path,
-                password: ndk_build::ndk::DEFAULT_DEV_KEYSTORE_PASSWORD.to_owned(),
+                password: rndk::ndk::DEFAULT_DEV_KEYSTORE_PASSWORD.to_owned(),
             },
             (Some(_path), None) => return Err(Error::MissingReleaseKey(profile_name.to_owned())),
             (None, _) => {
