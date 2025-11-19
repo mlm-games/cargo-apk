@@ -156,7 +156,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b35204fbdc0b3f4446b89fc1ac2cf84a8a68971995d0bf2e925ec7cd960f9cb3"
 
 [[package]]
-name = "cargo-apk"
+name = "cargo-rapk"
 version = "0.12.0"
 dependencies = [
  "anyhow",
@@ -165,7 +165,7 @@ dependencies = [
  "dunce",
  "env_logger",
  "log",
- "ndk-build",
+ "rndk",
  "serde",
  "thiserror 2.0.17",
  "toml 0.9.8",
@@ -571,20 +571,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "ndk-build"
-version = "0.12.0"
-dependencies = [
- "atty",
- "dirs",
- "dunce",
- "quick-xml",
- "serde",
- "thiserror 2.0.17",
- "which",
- "zip",
-]
-
-[[package]]
 name = "ndk-context"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -749,6 +735,20 @@ name = "regex-syntax"
 version = "0.8.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7a2d987857b319362043e95f5353c0535c1f58eec5336fdfcf626430af7def58"
+
+[[package]]
+name = "rndk"
+version = "0.12.0"
+dependencies = [
+ "atty",
+ "dirs",
+ "dunce",
+ "quick-xml",
+ "serde",
+ "thiserror 2.0.17",
+ "which",
+ "zip",
+]
 
 [[package]]
 name = "rustix"

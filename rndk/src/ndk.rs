@@ -457,7 +457,7 @@ impl Ndk {
         // Since r21 (https://github.com/android/ndk/wiki/Changelog-r21) LLVM binutils are included _for testing_;
         // Since r22 (https://github.com/android/ndk/wiki/Changelog-r22) GNU binutils are deprecated in favour of LLVM's;
         // Since r23 (https://github.com/android/ndk/wiki/Changelog-r23) GNU binutils have been removed.
-        // To maintain stability with the current ndk-build crate release, prefer GNU binutils for
+        // To maintain stability with the current rndk crate release, prefer GNU binutils for
         // as long as it is provided by the NDK instead of trying to use llvm-* from r21 onwards.
         let gnu_bin = format!("{}-{}{}", target.ndk_triple(), name, ext);
         let gnu_path = toolchain_path.join(&gnu_bin);

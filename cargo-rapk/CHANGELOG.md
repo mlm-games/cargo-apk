@@ -5,15 +5,15 @@
 # 0.10.0 (2023-11-30)
 
 - Bump MSRV to 1.70 to reflect dependency updates.
-- Bump `ndk-build` to [`0.10.0`](https://github.com/rust-mobile/cargo-apk/releases/tag/ndk-build-0.10.0) with various fixes:
+- Bump `rndk` to [`0.10.0`](https://github.com/rust-mobile/cargo-rapk/releases/tag/rndk-0.10.0) with various fixes:
   - Improved log filtering based on UID instead of PID;
   - Support for building APKs from an Android host;
   - More manifest attributes are now supported on the `Application` and `Activity` elements.
-- Improved artifacts based on https://github.com/rust-mobile/cargo-subcommand/pull/17 to support renames of `[lib]`, `[[bin]]` and `[[example]]`. ([#26](https://github.com/rust-mobile/cargo-apk/pull/26))
+- Improved artifacts based on https://github.com/rust-mobile/cargo-subcommand/pull/17 to support renames of `[lib]`, `[[bin]]` and `[[example]]`. ([#26](https://github.com/rust-mobile/cargo-rapk/pull/26))
 
 # 0.9.7 (2022-12-12)
 
-- Reimplement default package selection based on `$PWD` or `--manifest-path` by upgrading to [`cargo-subcommand 0.11.0`](https://github.com/rust-mobile/cargo-subcommand/releases/tag/0.11.0). ([#4](https://github.com/rust-mobile/cargo-apk/pull/4))
+- Reimplement default package selection based on `$PWD` or `--manifest-path` by upgrading to [`cargo-subcommand 0.11.0`](https://github.com/rust-mobile/cargo-subcommand/releases/tag/0.11.0). ([#4](https://github.com/rust-mobile/cargo-rapk/pull/4))
 - Removed known-arg parsing from `cargo apk --` to not make argument flags/values get lost, see also [#375](https://github.com/rust-windowing/android-ndk-rs/issues/375). ([#377](https://github.com/rust-windowing/android-ndk-rs/pull/377))
 
 # 0.9.6 (2022-11-23)
@@ -29,7 +29,7 @@
 
 # 0.9.4 (2022-09-12)
 
-- Upgrade to latest `ndk-build` to deduplicate libraries before packaging them into the APK. ([#333](https://github.com/rust-windowing/android-ndk-rs/pull/333))
+- Upgrade to latest `rndk` to deduplicate libraries before packaging them into the APK. ([#333](https://github.com/rust-windowing/android-ndk-rs/pull/333))
 - Support `android:resizeableActivity`. ([#338](https://github.com/rust-windowing/android-ndk-rs/pull/338))
 - Add `--device` argument to select `adb` device by serial (see `adb devices` for connected devices and their serial). ([#329](https://github.com/rust-windowing/android-ndk-rs/pull/329))
 - Print and follow `adb logcat` output after starting app. ([#332](https://github.com/rust-windowing/android-ndk-rs/pull/332))
@@ -58,9 +58,9 @@
   <https://developer.android.com/distribute/best-practices/develop/target-sdk>
   ([#203](https://github.com/rust-windowing/android-ndk-rs/pull/203))
 - Allow manifest `package` property to be provided in `Cargo.toml`. ([#236](https://github.com/rust-windowing/android-ndk-rs/pull/236))
-- Add `MAIN` intent filter in `from_subcommand` instead of relying on a custom serialization function in `ndk-build`. ([#241](https://github.com/rust-windowing/android-ndk-rs/pull/241))
+- Add `MAIN` intent filter in `from_subcommand` instead of relying on a custom serialization function in `rndk`. ([#241](https://github.com/rust-windowing/android-ndk-rs/pull/241))
 - Export the sole `NativeActivity` (through `android:exported="true"`) to allow it to be started by default if targeting Android S or higher. ([#242](https://github.com/rust-windowing/android-ndk-rs/pull/242))
-- `cargo-apk` version can now be queried through `cargo apk version`. ([#218](https://github.com/rust-windowing/android-ndk-rs/pull/218))
+- `cargo-rapk` version can now be queried through `cargo apk version`. ([#218](https://github.com/rust-windowing/android-ndk-rs/pull/218))
 - Environment variables from `.cargo/config.toml`'s `[env]` section are now propagated to the process environment. ([#249](https://github.com/rust-windowing/android-ndk-rs/pull/249))
 
 # 0.8.2 (2021-11-22)
@@ -71,7 +71,7 @@
 
 # 0.8.1 (2021-08-06)
 
-- Updated to use [ndk-build 0.4.2](../ndk-build/CHANGELOG.md#042-2021-08-06)
+- Updated to use [rndk 0.4.2](../rndk/CHANGELOG.md#042-2021-08-06)
 
 # 0.8.0 (2021-07-06)
 
@@ -86,16 +86,16 @@
 
 # 0.6.0 (2021-04-20)
 
-- **Breaking:** uses `ndk-build`'s new (de)serialized `Manifest` struct to properly serialize a toml's `[package.metadata.android]` to an `AndroidManifest.xml`. The `[package.metadata.android]` now closely resembles the structure of [an android manifest file](https://developer.android.com/guide/topics/manifest/manifest-element). See [README](README.md) for an example of the new `[package.metadata.android]` structure and all manifest attributes that are currently supported.
+- **Breaking:** uses `rndk`'s new (de)serialized `Manifest` struct to properly serialize a toml's `[package.metadata.android]` to an `AndroidManifest.xml`. The `[package.metadata.android]` now closely resembles the structure of [an android manifest file](https://developer.android.com/guide/topics/manifest/manifest-element). See [README](README.md) for an example of the new `[package.metadata.android]` structure and all manifest attributes that are currently supported.
 
 # 0.5.6 (2020-11-25)
 
 - Use `dunce::simplified` when extracting the manifest's assets and resource folder
-- Updated to use [ndk-build 0.1.4](../ndk-build/CHANGELOG.md#014-2020-11-25)
+- Updated to use [rndk 0.1.4](../rndk/CHANGELOG.md#014-2020-11-25)
 
 # 0.5.5 (2020-11-21)
 
-- Updated to use [ndk-build 0.1.3](../ndk-build/CHANGELOG.md#013-2020-11-21)
+- Updated to use [rndk 0.1.3](../rndk/CHANGELOG.md#013-2020-11-21)
 
 # 0.5.4 (2020-11-01)
 
@@ -108,14 +108,14 @@
 
 # 0.5.2 (2020-09-15)
 
-- Updated to use [ndk-build 0.1.2](../ndk-build/CHANGELOG.md#012-2020-09-15)
+- Updated to use [rndk 0.1.2](../rndk/CHANGELOG.md#012-2020-09-15)
 
 # 0.5.1 (2020-07-15)
 
-- Updated to use [ndk-build 0.1.1](../ndk-build/CHANGELOG.md#011-2020-07-15)
+- Updated to use [rndk 0.1.1](../rndk/CHANGELOG.md#011-2020-07-15)
 
 # 0.5.0 (2020-04-22)
 
-- Updated to use [ndk-build 0.1.0](../ndk-build/CHANGELOG.md#010-2020-04-22)
+- Updated to use [rndk 0.1.0](../rndk/CHANGELOG.md#010-2020-04-22)
 - First release in almost 3 years! 🎉
 - **Breaking:** A ton of things changed!

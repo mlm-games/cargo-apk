@@ -1,14 +1,14 @@
 [package]
-name = "ndk-build"
+name = "rndk"
 version = "0.12.0"
-authors = ["The Rust Windowing contributors"]
+authors = ["The Rust Windowing contributors"]            # OAuthors
 edition = "2024"
 description = "Utilities for building Android binaries"
 license = "MIT OR Apache-2.0"
 keywords = ["android", "ndk", "apk"]
-documentation = "https://docs.rs/ndk-build"
-homepage = "https://github.com/rust-mobile/cargo-apk"
-repository = "https://github.com/rust-mobile/cargo-apk"
+documentation = "https://docs.rs/rndk"
+homepage = "https://github.com/rust-mobile/cargo-rapk"
+repository = "https://github.com/rust-mobile/cargo-rapk"
 rust-version = "1.85"
 
 [dependencies]

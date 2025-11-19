@@ -1,7 +1,3 @@
 [workspace]
 resolver = "3"
-members = [
-    "ndk-build",
-    "ndk-examples",
-    "cargo-apk",
-]
+members = ["rndk", "ndk-examples", "cargo-rapk"]

@@ -1,10 +1,10 @@
 # Create Android packages (APKs) from native Rust crates
 
-[![Actions Status](https://github.com/rust-mobile/cargo-apk/actions/workflows/rust.yml/badge.svg)](https://github.com/rust-mobile/cargo-apk/actions)
-[![Latest version](https://img.shields.io/crates/v/cargo-apk.svg?logo=rust)](https://crates.io/crates/cargo-apk)
+[![Actions Status](https://github.com/rust-mobile/cargo-rapk/actions/workflows/rust.yml/badge.svg)](https://github.com/rust-mobile/cargo-rapk/actions)
+[![Latest version](https://img.shields.io/crates/v/cargo-rapk.svg?logo=rust)](https://crates.io/crates/cargo-rapk)
 [![MSRV](https://img.shields.io/badge/rustc-1.70.0+-ab6000.svg)](https://blog.rust-lang.org/2023/06/01/Rust-1.70.0.html)
-[![Documentation](https://docs.rs/cargo-apk/badge.svg)](https://docs.rs/cargo-apk)
-[![Lines of code](https://tokei.rs/b1/github/rust-mobile/cargo-apk)](https://github.com/rust-mobile/cargo-apk)
+[![Documentation](https://docs.rs/cargo-rapk/badge.svg)](https://docs.rs/cargo-rapk)
+[![Lines of code](https://tokei.rs/b1/github/rust-mobile/cargo-rapk)](https://github.com/rust-mobile/cargo-rapk)
 ![MIT](https://img.shields.io/badge/License-MIT-green.svg)
 ![Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-green.svg)
 
@@ -18,18 +18,18 @@ Tool for creating Android packages from native Rust crates, requiring minimal se
 From crates.io:
 
 ```console
-$ cargo install cargo-apk
+$ cargo install cargo-rapk
 ```
 
 From locally downloaded or cloned source:
 
 ```console
-$ cargo install --path cargo-apk/
+$ cargo install --path cargo-rapk/
 ```
 
 ## Crate configuration
 
-Android and thus `cargo-apk` require the [Cargo Target] to be a Shared Library, corresponding to Rust's `cdylib` `crate-type`.  For the sole library in a crate, configure this as follows in `Cargo.toml`:
+Android and thus `cargo-rapk` require the [Cargo Target] to be a Shared Library, corresponding to Rust's `cdylib` `crate-type`.  For the sole library in a crate, configure this as follows in `Cargo.toml`:
 
 ```toml
 [lib]
@@ -159,7 +159,7 @@ max_sdk_version = 18
 authorities = "org.khronos.openxr.runtime_broker;org.khronos.openxr.system_runtime_broker"
 # Note: The `name` attribute is normally not required for a queries provider, but is non-optional
 # as a workaround for aapt throwing errors about missing `android:name` attribute.
-# This will be made optional if/when cargo-apk migrates to aapt2.
+# This will be made optional if/when cargo-rapk migrates to aapt2.
 name = "org.khronos.openxr"
 
 # See https://developer.android.com/guide/topics/manifest/queries-element#intent
@@ -272,7 +272,7 @@ categories = ["android.intent.category.DEFAULT", "android.intent.category.BROWSA
 scheme = "https"
 host = "github.com"
 port = "8080"
-path = "/rust-windowing/android-ndk-rs/tree/master/cargo-apk"
+path = "/rust-windowing/android-ndk-rs/tree/master/cargo-rapk"
 path_prefix = "/rust-windowing/"
 mime_type = "image/jpeg"
 

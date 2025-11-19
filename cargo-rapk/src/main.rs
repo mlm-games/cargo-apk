@@ -87,7 +87,7 @@ enum ApkSubCmd {
         #[clap(flatten)]
         args: Args,
     },
-    /// Print the version of cargo-apk
+    /// Print the version of cargo-rapk
     Version,
 }
 

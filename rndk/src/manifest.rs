@@ -158,7 +158,7 @@ pub struct Activity {
     #[serde(rename(serialize = "meta-data"))]
     #[serde(default)]
     pub meta_data: Vec<MetaData>,
-    /// If no `MAIN` action exists in any intent filter, a default `MAIN` filter is serialized by `cargo-apk`.
+    /// If no `MAIN` action exists in any intent filter, a default `MAIN` filter is serialized by `cargo-rapk`.
     #[serde(rename(serialize = "intent-filter"))]
     #[serde(default)]
     pub intent_filter: Vec<IntentFilter>,
@@ -345,7 +345,7 @@ pub struct QueryProvider {
     pub authorities: String,
 
     // The specs say only an `authorities` attribute is required for providers contained in a `queries` element
-    // however this is required for aapt support and should be made optional if/when cargo-apk migrates to aapt2
+    // however this is required for aapt support and should be made optional if/when cargo-rapk migrates to aapt2
     #[serde(rename(serialize = "@android:name"))]
     pub name: String,
 }

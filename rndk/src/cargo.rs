@@ -72,7 +72,7 @@ pub fn cargo_ndk(
     if ndk.build_tag() > 7272597 {
         let cargo_apk_link_dir = target_dir
             .as_ref()
-            .join("cargo-apk-temp-extra-link-libraries");
+            .join("cargo-rapk-temp-extra-link-libraries");
         std::fs::create_dir_all(&cargo_apk_link_dir)
             .map_err(|e| NdkError::IoPathError(cargo_apk_link_dir.clone(), e))?;
         let libgcc = cargo_apk_link_dir.join("libgcc.a");

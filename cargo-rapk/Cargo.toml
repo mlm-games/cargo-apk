@@ -1,14 +1,14 @@
 [package]
-name = "cargo-apk"
+name = "cargo-rapk"
 version = "0.12.0"
-authors = ["The Rust Windowing contributors"]
+authors = ["The Rust Windowing contributors"]            #OAuthors
 edition = "2024"
 description = "Helps cargo build APKs"
 license = "MIT OR Apache-2.0"
 keywords = ["android", "ndk", "apk"]
-documentation = "https://docs.rs/cargo-apk"
-homepage = "https://github.com/rust-mobile/cargo-apk"
-repository = "https://github.com/rust-mobile/cargo-apk"
+documentation = "https://docs.rs/cargo-rapk"
+homepage = "https://github.com/rust-mobile/cargo-rapk"
+repository = "https://github.com/rust-mobile/cargo-rapk"
 rust-version = "1.85"
 
 [dependencies]
@@ -18,7 +18,7 @@ clap = { version = "4.5.49", features = ["derive", "env"] }
 dunce = "1"
 env_logger = "0.11.8"
 log = "0.4"
-ndk-build = { path = "../ndk-build", version = "0.12.0" }
+rndk = { path = "../rndk", version = "0.12.0" }
 serde = { version = "1", features = ["derive"] }
 thiserror = "2"
 toml = "0.9.5"

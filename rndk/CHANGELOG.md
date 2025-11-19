@@ -2,15 +2,15 @@
 
 # 0.10.0 (2023-11-30)
 
-- Add `android:extractNativeLibs`, `android:usesCleartextTraffic` attributes to the manifest's `Application` element, and `android:alwaysRetainTaskState` to the `Activity` element. ([#15](https://github.com/rust-mobile/cargo-apk/pull/15))
-- Enable building from `android` host. ([#29](https://github.com/rust-mobile/cargo-apk/pull/29))
-- Use app `uid` instead of `pid` to limit `logcat` output to the current app. ([#33](https://github.com/rust-mobile/cargo-apk/pull/33))
+- Add `android:extractNativeLibs`, `android:usesCleartextTraffic` attributes to the manifest's `Application` element, and `android:alwaysRetainTaskState` to the `Activity` element. ([#15](https://github.com/rust-mobile/cargo-rapk/pull/15))
+- Enable building from `android` host. ([#29](https://github.com/rust-mobile/cargo-rapk/pull/29))
+- Use app `uid` instead of `pid` to limit `logcat` output to the current app. ([#33](https://github.com/rust-mobile/cargo-rapk/pull/33))
 
 # 0.9.0 (2022-11-23)
 
 - Add `ndk::DEFAULT_DEV_KEYSTORE_PASSWORD` and make `apk::ApkConfig::apk` public. ([#358](https://github.com/rust-windowing/android-ndk-rs/pull/358))
 - `RUSTFLAGS` is now considered if `CARGO_ENCODED_RUSTFLAGS` is not present allowing `cargo apk build` to not break users' builds if they depend on `RUSTFLAGS` being set prior to the build,
-  as `CARGO_ENCODED_RUSTFLAGS` set by `ndk-build` before invoking `cargo` will take precedence over [all other sources of build flags](https://doc.rust-lang.org/cargo/reference/config.html#buildrustflags). ([#357](https://github.com/rust-windowing/android-ndk-rs/pull/357))
+  as `CARGO_ENCODED_RUSTFLAGS` set by `rndk` before invoking `cargo` will take precedence over [all other sources of build flags](https://doc.rust-lang.org/cargo/reference/config.html#buildrustflags). ([#357](https://github.com/rust-windowing/android-ndk-rs/pull/357))
 - Add `ApkConfig::strip`, allowing a user to specify how they want debug symbols treated after cargo has finished building, but before the shared object is copied into the APK. ([#356](https://github.com/rust-windowing/android-ndk-rs/pull/356))
 
 (0.8.1, released on 2022-10-14, was yanked due to violating semver.)
@@ -23,7 +23,7 @@
 - Add `adb` device serial parameter to `detect_abi()` and `Apk::{install,start}()`. ([#329](https://github.com/rust-windowing/android-ndk-rs/pull/329))
 - Fix missing `.exe` extension for `adb` on Windows inside `detect_abi()`. ([#339](https://github.com/rust-windowing/android-ndk-rs/pull/339))
 - `start()` now returns the PID of the started app process (useful for passing to `adb logcat --pid`). ([#331](https://github.com/rust-windowing/android-ndk-rs/pull/331))
-- Inherit `ndk_gdb()` function from `cargo-apk` with the appropriate script extension across platforms. ([#330](https://github.com/rust-windowing/android-ndk-rs/pull/330), [#258](https://github.com/rust-windowing/android-ndk-rs/pull/258))
+- Inherit `ndk_gdb()` function from `cargo-rapk` with the appropriate script extension across platforms. ([#330](https://github.com/rust-windowing/android-ndk-rs/pull/330), [#258](https://github.com/rust-windowing/android-ndk-rs/pull/258))
 - Provide `adb` path to `ndk-gdb`, allowing it to run without `adb` in `PATH`. ([#343](https://github.com/rust-windowing/android-ndk-rs/pull/343))
 - Remove quotes from `Android.mk` to fix `ndk-gdb` on Windows. ([#344](https://github.com/rust-windowing/android-ndk-rs/pull/344))
 - Launch Android activity through `ndk-gdb` to block app start until the debugger is attached. ([#345](https://github.com/rust-windowing/android-ndk-rs/pull/345))
@@ -47,7 +47,7 @@
   for more consistent interaction with Android backwards compatibility handling and its increasingly strict usage rules:
   <https://developer.android.com/distribute/best-practices/develop/target-sdk>
 - **Breaking:** Remove default insertion of `MAIN` intent filter through a custom serialization function, this is better filled in by
-  the default setup in `cargo-apk`. ([#241](https://github.com/rust-windowing/android-ndk-rs/pull/241))
+  the default setup in `cargo-rapk`. ([#241](https://github.com/rust-windowing/android-ndk-rs/pull/241))
 - Add `android:exported` attribute to the manifest's `Activity` element. ([#242](https://github.com/rust-windowing/android-ndk-rs/pull/242))
 - Add `android:sharedUserId` attribute to the manifest's top-level `manifest` element. ([#252](https://github.com/rust-windowing/android-ndk-rs/pull/252))
 - Add `queries` element to the manifest's top-level `manifest` element. ([#259](https://github.com/rust-windowing/android-ndk-rs/pull/259))
