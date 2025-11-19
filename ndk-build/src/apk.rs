@@ -1,3 +1,5 @@
+use serde::Deserialize;
+
 use crate::error::NdkError;
 use crate::manifest::AndroidManifest;
 use crate::ndk::{Key, Ndk};
@@ -15,22 +17,17 @@ use std::process::Command;
 /// or [`split-debuginfo`](https://doc.rust-lang.org/cargo/reference/profiles.html#split-debuginfo)
 /// in your cargo manifest(s) may cause debug symbols to not be present in a
 /// `.so`, which would cause these options to do nothing.
-#[derive(Debug, Copy, Clone, PartialEq, Eq, serde::Deserialize)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Deserialize, Default)]
 #[serde(rename_all = "snake_case")]
 pub enum StripConfig {
     /// Does not treat debug symbols specially
+    #[default]
     Default,
     /// Removes debug symbols from the library before copying it into the APK
     Strip,
     /// Splits the library into into an ELF (`.so`) and DWARF (`.dwarf`). Only the
     /// `.so` is copied into the APK
     Split,
-}
-
-impl Default for StripConfig {
-    fn default() -> Self {
-        Self::Default
-    }
 }
 
 pub struct ApkConfig {
