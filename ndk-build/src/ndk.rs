@@ -8,6 +8,106 @@ use std::process::Command;
 /// [`Ndk::debug_key`]
 pub const DEFAULT_DEV_KEYSTORE_PASSWORD: &str = "android";
 
+use atty::Stream;
+
+fn is_tty() -> bool {
+    atty::is(Stream::Stdin) && atty::is(Stream::Stdout)
+}
+
+fn infer_sdk_from_adb() -> Option<std::path::PathBuf> {
+    which::which(bin!("adb")).ok().and_then(|adb| {
+        adb.parent()
+            .and_then(|p| p.parent()) // .../platform-tools/..
+            .map(|p| p.to_path_buf())
+            .filter(|p| p.join("platform-tools").exists())
+    })
+}
+
+fn default_sdk_locations() -> Vec<std::path::PathBuf> {
+    let mut candidates = Vec::new();
+    if let Some(home) = dirs::home_dir() {
+        #[cfg(target_os = "macos")]
+        candidates.push(home.join("Library/Android/sdk"));
+        #[cfg(target_os = "linux")]
+        candidates.push(home.join("Android/Sdk"));
+        #[cfg(target_os = "windows")]
+        {
+            if let Some(local) = std::env::var_os("LOCALAPPDATA") {
+                candidates.push(std::path::PathBuf::from(local).join("Android").join("Sdk"));
+            }
+            candidates.push(std::path::PathBuf::from(r"C:\Android\Sdk"));
+        }
+    }
+    candidates
+}
+
+fn validate_sdk_root(p: &std::path::Path) -> bool {
+    p.join("platforms").exists() && p.join("build-tools").exists()
+}
+
+fn parse_pkg_revision(s: &str) -> (u32, u32, u32, bool) {
+    // returns (major, minor, patch, is_beta)
+    // Accept 25.2.9519653 or 25.2.9519653-beta1
+    let mut parts = s.trim().split('.');
+    let major = parts.next().and_then(|x| x.parse().ok()).unwrap_or(0);
+    let minor = parts.next().and_then(|x| x.parse().ok()).unwrap_or(0);
+    let rest = parts.next().unwrap_or("0");
+    let (patch_str, beta) = rest
+        .split_once('-')
+        .map_or((rest, false), |(a, _)| (a, true));
+    let patch = patch_str.parse().unwrap_or(0);
+    (major, minor, patch, beta)
+}
+
+fn best_ndk_under(sdk: &std::path::Path) -> Option<std::path::PathBuf> {
+    let ndk_dir = sdk.join("ndk");
+    if !ndk_dir.exists() {
+        return None;
+    }
+    let mut best: Option<(std::path::PathBuf, (u32, u32, u32, bool))> = None;
+    for e in std::fs::read_dir(&ndk_dir).ok()?.flatten() {
+        let cand = e.path();
+        let props = cand.join("source.properties");
+        if !props.exists() {
+            continue;
+        }
+        if let Ok(text) = std::fs::read_to_string(&props) {
+            if let Some((_, v)) = text
+                .lines()
+                .find_map(|l| l.split_once('=').map(|(k, v)| (k.trim(), v.trim())))
+                .filter(|(k, _)| *k == "Pkg.Revision")
+            {
+                let rev = parse_pkg_revision(v);
+                let pick = match &best {
+                    None => true,
+                    Some((_, old)) => rev > *old, // tuple order gives proper max; beta sorts after non-beta with same numbers
+                };
+                if pick {
+                    best = Some((cand.clone(), rev));
+                }
+            }
+        }
+    }
+    best.map(|(p, _)| p)
+}
+
+fn validate_ndk_root(p: &std::path::Path) -> bool {
+    p.join("source.properties").exists() && p.join("toolchains").join("llvm").exists()
+}
+
+fn prompt_path(label: &str) -> Option<std::path::PathBuf> {
+    use std::io::{self, Write};
+    eprint!("Enter path to {label} (or leave empty to abort): ");
+    io::stderr().flush().ok()?;
+    let mut line = String::new();
+    io::stdin().read_line(&mut line).ok()?;
+    let trimmed = line.trim();
+    if trimmed.is_empty() {
+        return None;
+    }
+    Some(std::path::PathBuf::from(trimmed))
+}
+
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Ndk {
     sdk_path: PathBuf,
@@ -20,60 +120,109 @@ pub struct Ndk {
 
 impl Ndk {
     pub fn from_env() -> Result<Self, NdkError> {
+        // env first
         let sdk_path = {
-            let sdk_path = std::env::var("ANDROID_SDK_ROOT").ok();
-            if sdk_path.is_some() {
-                eprintln!(
-                    "Warning: Environment variable ANDROID_SDK_ROOT is deprecated \
-                    (https://developer.android.com/studio/command-line/variables#envar). \
-                    It will be used until it is unset and replaced by ANDROID_HOME."
-                );
-            }
+            let sdk_env = std::env::var("ANDROID_SDK_ROOT")
+                .ok()
+                .or_else(|| std::env::var("ANDROID_HOME").ok());
+            let mut sdk = sdk_env.map(std::path::PathBuf::from);
 
-            PathBuf::from(
-                sdk_path
-                    .or_else(|| std::env::var("ANDROID_HOME").ok())
-                    .ok_or(NdkError::SdkNotFound)?,
-            )
+            if sdk.is_none() {
+                sdk = infer_sdk_from_adb();
+            }
+            if sdk.is_none() {
+                for cand in default_sdk_locations() {
+                    if validate_sdk_root(&cand) {
+                        sdk = Some(cand);
+                        break;
+                    }
+                }
+            }
+            if sdk.is_none() && is_tty() {
+                eprintln!(
+                    "Android SDK not found via ANDROID_HOME/ANDROID_SDK_ROOT, adb, or default locations."
+                );
+                if let Some(p) = prompt_path("Android SDK") {
+                    if validate_sdk_root(&p) {
+                        eprintln!("Using SDK at {}", p.display());
+                        unsafe { std::env::set_var("ANDROID_HOME", &p) };
+                        sdk = Some(p);
+                    } else {
+                        eprintln!(
+                            "Given path does not look like an Android SDK (missing platforms/build-tools)."
+                        );
+                    }
+                }
+            }
+            sdk.ok_or(NdkError::SdkNotFound)?
         };
+
+        // Existing deprecation note stays as-is
+        if std::env::var_os("ANDROID_SDK_ROOT").is_some() {
+            eprintln!(
+                "Warning: Environment variable ANDROID_SDK_ROOT is deprecated \
+            (https://developer.android.com/studio/command-line/variables#envar). \
+            It will be used until it is unset and replaced by ANDROID_HOME."
+            );
+        }
 
         let user_home = {
             let user_home = std::env::var("ANDROID_SDK_HOME")
-                .map(PathBuf::from)
-                // Unlike ANDROID_USER_HOME, ANDROID_SDK_HOME points to the _parent_ directory of .android:
-                // https://developer.android.com/studio/command-line/variables#envar
+                .map(std::path::PathBuf::from)
                 .map(|home| home.join(".android"))
                 .ok();
-
             if user_home.is_some() {
                 eprintln!(
                     "Warning: Environment variable ANDROID_SDK_HOME is deprecated \
-                    (https://developer.android.com/studio/command-line/variables#envar). \
-                    It will be used until it is unset and replaced by ANDROID_USER_HOME."
+                (https://developer.android.com/studio/command-line/variables#envar). \
+                It will be used until it is unset and replaced by ANDROID_USER_HOME."
                 );
             }
-
-            // Default to $HOME/.android
             user_home
-                .or_else(|| std::env::var("ANDROID_USER_HOME").map(PathBuf::from).ok())
+                .or_else(|| {
+                    std::env::var("ANDROID_USER_HOME")
+                        .map(std::path::PathBuf::from)
+                        .ok()
+                })
                 .or_else(|| dirs::home_dir().map(|home| home.join(".android")))
-                .ok_or_else(|| NdkError::PathNotFound(PathBuf::from("$HOME")))?
+                .ok_or_else(|| NdkError::PathNotFound(std::path::PathBuf::from("$HOME")))?
         };
 
-        let ndk_path = {
-            let ndk_path = std::env::var("ANDROID_NDK_ROOT")
-                .ok()
-                .or_else(|| std::env::var("ANDROID_NDK_PATH").ok())
-                .or_else(|| std::env::var("ANDROID_NDK_HOME").ok())
-                .or_else(|| std::env::var("NDK_HOME").ok());
+        let mut ndk_path = std::env::var("ANDROID_NDK_ROOT")
+            .ok()
+            .or_else(|| std::env::var("ANDROID_NDK_PATH").ok())
+            .or_else(|| std::env::var("ANDROID_NDK_HOME").ok())
+            .or_else(|| std::env::var("NDK_HOME").ok())
+            .map(std::path::PathBuf::from);
 
-            // default ndk installation path
-            if ndk_path.is_none() && sdk_path.join("ndk-bundle").exists() {
-                sdk_path.join("ndk-bundle")
-            } else {
-                PathBuf::from(ndk_path.ok_or(NdkError::NdkNotFound)?)
+        // then sdk/ndk/<version> (picks best), then ndk-bundle
+        if ndk_path.is_none() {
+            if let Some(p) = best_ndk_under(&sdk_path) {
+                ndk_path = Some(p);
+            } else if sdk_path.join("ndk-bundle").exists() {
+                ndk_path = Some(sdk_path.join("ndk-bundle"));
             }
-        };
+        }
+
+        if ndk_path.is_none() && is_tty() {
+            eprintln!(
+                "Android NDK not found via env or under {}/ndk / ndk-bundle.",
+                sdk_path.display()
+            );
+            if let Some(p) = prompt_path("Android NDK") {
+                if validate_ndk_root(&p) {
+                    eprintln!("Using NDK at {}", p.display());
+                    unsafe { std::env::set_var("ANDROID_NDK_ROOT", &p) };
+                    ndk_path = Some(p);
+                } else {
+                    eprintln!(
+                        "Given path does not look like an Android NDK (missing toolchains/llvm, source.properties)."
+                    );
+                }
+            }
+        }
+
+        let ndk_path = ndk_path.ok_or(NdkError::NdkNotFound)?;
 
         let build_tools_dir = sdk_path.join("build-tools");
         let build_tools_version = std::fs::read_dir(&build_tools_dir)

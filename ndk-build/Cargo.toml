@@ -1,6 +1,6 @@
 [package]
 name = "ndk-build"
-version = "0.11.7"
+version = "0.12.0"
 authors = ["The Rust Windowing contributors"]
 edition = "2024"
 description = "Utilities for building Android binaries"
@@ -19,3 +19,4 @@ serde = { version = "1", features = ["derive"] }
 thiserror = "2"
 which = "8"
 zip = { version = "6", default-features = false, features = ["deflate"] }
+atty = "0.2"
