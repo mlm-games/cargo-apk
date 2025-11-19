@@ -45,12 +45,12 @@ impl<'a> ApkBuilder<'a> {
     fn apply_deterministic_env(&self) {
         if self.repro.deterministic {
             // Required so cargo_ndk() enables reproducible settings always
-            unsafe { std::env::set_var("CARGO_APK_DETERMINISTIC", "1") };
+            unsafe { std::env::set_var("CARGO_RAPK_DETERMINISTIC", "1") };
             if let Some(ts) = self.repro.ts_unix {
                 unsafe { std::env::set_var("SOURCE_DATE_EPOCH", ts.to_string()) };
             }
         } else {
-            unsafe { std::env::remove_var("CARGO_APK_DETERMINISTIC") };
+            unsafe { std::env::remove_var("CARGO_RAPK_DETERMINISTIC") };
         }
     }
     pub fn from_subcommand(
@@ -182,9 +182,9 @@ impl<'a> ApkBuilder<'a> {
         };
 
         if deterministic {
-            unsafe { std::env::set_var("CARGO_APK_DETERMINISTIC", "1") };
+            unsafe { std::env::set_var("CARGO_RAPK_DETERMINISTIC", "1") };
         } else {
-            unsafe { std::env::remove_var("CARGO_APK_DETERMINISTIC") };
+            unsafe { std::env::remove_var("CARGO_RAPK_DETERMINISTIC") };
         }
     }
 
@@ -322,7 +322,7 @@ impl<'a> ApkBuilder<'a> {
             Profile::Custom(c) => c.as_str(),
         };
         let keystore_env = format!(
-            "CARGO_APK_{}_KEYSTORE",
+            "CARGO_RAPK_{}_KEYSTORE",
             profile_name.to_uppercase().replace('-', "_")
         );
         let password_env = format!("{keystore_env}_PASSWORD");

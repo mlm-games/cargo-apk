@@ -225,9 +225,9 @@ impl<'a> UnalignedApk<'a> {
         let mut zipalign = self.config.build_tool(bin!("zipalign"))?;
         zipalign.arg("-f").arg("-v");
 
-        // overridden with CARGO_APK_PAGE_SIZE_KB (allowed values per zipalign: 4, 16, 64).
+        // overridden with CARGO_RAPK_PAGE_SIZE_KB (allowed values per zipalign: 4, 16, 64).
         // Requires Build-Tools >= 35.0.0.
-        let page_size_kb = std::env::var("CARGO_APK_PAGE_SIZE_KB")
+        let page_size_kb = std::env::var("CARGO_RAPK_PAGE_SIZE_KB")
             .ok()
             .and_then(|s| s.parse::<u32>().ok())
             .unwrap_or(16);

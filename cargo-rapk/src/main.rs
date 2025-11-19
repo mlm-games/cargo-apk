@@ -30,13 +30,13 @@ struct Args {
 
     // Reproducibility knobs
     /// Enable deterministic (reproducible) build settings
-    #[clap(long, env = "CARGO_APK_DETERMINISTIC")]
+    #[clap(long, env = "CARGO_RAPK_DETERMINISTIC")]
     deterministic: bool,
     /// Produce an unsigned APK
-    #[clap(long, env = "CARGO_APK_NO_SIGN")]
+    #[clap(long, env = "CARGO_RAPK_NO_SIGN")]
     unsigned: bool,
     /// zipalign alignment in bytes (default: 4)
-    #[clap(long = "align", env = "CARGO_APK_ALIGN", default_value = "4")]
+    #[clap(long = "align", env = "CARGO_RAPK_ALIGN", default_value = "4")]
     align: u32,
     /// UNIX timestamp used for ZIP mtimes (defaults to SOURCE_DATE_EPOCH if present)
     #[clap(long = "timestamp")]
@@ -67,7 +67,7 @@ enum RapkSubCmd {
         cargo_cmd: String,
 
         /// Arguments passed to cargo. Some arguments will be used to configure
-        /// the environment similar to other `cargo apk` commands
+        /// the environment similar to other `cargo rapk` commands
         // TODO: This enum variant should parse into `Args` as soon as `clap` supports
         // parsing only unrecognized args into a side-buffer.
         #[clap(trailing_var_arg = true, allow_hyphen_values = true)]

@@ -53,15 +53,15 @@ crate-type = ["cdylib"]
 - `run`: Compile, install and run the selected crate/package on an attached Android device via `adb`
 - `gdb`: Start a gdb session on an attached Android device via `adb`, with symbols loaded
 
-Invoke `cargo apk help` for a more detailed overview of all available commands and their options (`cargo apk run --help` or `cargo apk help run` for example).
+Invoke `cargo rapk help` for a more detailed overview of all available commands and their options (`cargo rapk run --help` or `cargo rapk help run` for example).
 
 ### Target selection
 
-Like `cargo`, the above subcommands from `cargo apk` support selecting the target to build and/or run using `--package`/`-p` (which picks the library target inside the crate) or `--example`, as long as the Cargo Target is a `cdylib` as described above.
+Like `cargo`, the above subcommands from `cargo rapk` support selecting the target to build and/or run using `--package`/`-p` (which picks the library target inside the crate) or `--example`, as long as the Cargo Target is a `cdylib` as described above.
 
 ## Manifest
 
-`cargo apk` reads additional configuration from Cargo's `[package.metadata]` table. The following configuration options are supported by `cargo apk` under `[package.metadata.android]`:
+`cargo rapk` reads additional configuration from Cargo's `[package.metadata]` table. The following configuration options are supported by `cargo rapk` under `[package.metadata.android]`:
 
 ```toml
 [package.metadata.android]
@@ -121,8 +121,8 @@ shared_user_id = "my.shared.user.id"
 #
 # The keystore path can be absolute, or relative to the Cargo.toml file.
 #
-# The environment variables `CARGO_APK_<PROFILE>_KEYSTORE` and
-# `CARGO_APK_<PROFILE>_KEYSTORE_PASSWORD` can be set to a keystore path
+# The environment variables `CARGO_RAPK_<PROFILE>_KEYSTORE` and
+# `CARGO_RAPK_<PROFILE>_KEYSTORE_PASSWORD` can be set to a keystore path
 # and keystore password respectively. The profile portion follows the same rules
 # as `<cfg>`, it is the uppercased profile name with `-` replaced with `_`.
 #
@@ -284,4 +284,4 @@ mime_type = "image/jpeg"
 "tcp:1338" = "tcp:1338"
 ```
 
-If a manifest attribute is not supported by `cargo apk` feel free to create a PR that adds the missing attribute.
+If a manifest attribute is not supported by `cargo rapk` feel free to create a PR that adds the missing attribute.

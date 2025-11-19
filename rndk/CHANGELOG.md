@@ -9,7 +9,7 @@
 # 0.9.0 (2022-11-23)
 
 - Add `ndk::DEFAULT_DEV_KEYSTORE_PASSWORD` and make `apk::ApkConfig::apk` public. ([#358](https://github.com/rust-windowing/android-ndk-rs/pull/358))
-- `RUSTFLAGS` is now considered if `CARGO_ENCODED_RUSTFLAGS` is not present allowing `cargo apk build` to not break users' builds if they depend on `RUSTFLAGS` being set prior to the build,
+- `RUSTFLAGS` is now considered if `CARGO_ENCODED_RUSTFLAGS` is not present allowing `cargo rapk build` to not break users' builds if they depend on `RUSTFLAGS` being set prior to the build,
   as `CARGO_ENCODED_RUSTFLAGS` set by `rndk` before invoking `cargo` will take precedence over [all other sources of build flags](https://doc.rust-lang.org/cargo/reference/config.html#buildrustflags). ([#357](https://github.com/rust-windowing/android-ndk-rs/pull/357))
 - Add `ApkConfig::strip`, allowing a user to specify how they want debug symbols treated after cargo has finished building, but before the shared object is copied into the APK. ([#356](https://github.com/rust-windowing/android-ndk-rs/pull/356))
 
@@ -71,7 +71,7 @@
 # 0.3.0 (2021-05-10)
 
 - New `ApkConfig` field `apk_name` is now used for APK file naming, instead of the application label.
-- Renamed `cargo_apk` utility to `cargo_ndk`.
+- Renamed `cargo_rapk` utility to `cargo_ndk`.
 
 # 0.2.0 (2021-04-20)
 

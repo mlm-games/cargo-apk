@@ -14,7 +14,7 @@ $ adb logcat RustStdoutStderr:D '*:S'
 Prints `hello world` in the console
 
 ```console
-$ cargo apk build --example hello_world
+$ cargo rapk build --example hello_world
 ```
 
 ### jni_audio
@@ -22,5 +22,5 @@ $ cargo apk build --example hello_world
 Prints output audio devices in the console
 
 ```console
-$ cargo apk run --example jni_audio
+$ cargo rapk run --example jni_audio
 ```

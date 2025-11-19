@@ -70,12 +70,12 @@ pub fn cargo_ndk(
     // is still required even after replacing it with libunwind in the source.
     // XXX: Add an upper-bound on the Rust version whenever this is not necessary anymore.
     if ndk.build_tag() > 7272597 {
-        let cargo_apk_link_dir = target_dir
+        let cargo_rapk_link_dir = target_dir
             .as_ref()
             .join("cargo-rapk-temp-extra-link-libraries");
-        std::fs::create_dir_all(&cargo_apk_link_dir)
-            .map_err(|e| NdkError::IoPathError(cargo_apk_link_dir.clone(), e))?;
-        let libgcc = cargo_apk_link_dir.join("libgcc.a");
+        std::fs::create_dir_all(&cargo_rapk_link_dir)
+            .map_err(|e| NdkError::IoPathError(cargo_rapk_link_dir.clone(), e))?;
+        let libgcc = cargo_rapk_link_dir.join("libgcc.a");
         std::fs::write(&libgcc, "INPUT(-lunwind)").map_err(|e| NdkError::IoPathError(libgcc, e))?;
 
         // cdylibs in transitive dependencies still get built and also need this
@@ -89,13 +89,13 @@ pub fn cargo_ndk(
         rustflags.push_str("-L");
         rustflags.push_str(SEP);
         rustflags.push_str(
-            cargo_apk_link_dir
+            cargo_rapk_link_dir
                 .to_str()
                 .expect("Target dir must be valid UTF-8"),
         );
     }
 
-    if std::env::var("CARGO_APK_DETERMINISTIC").ok().as_deref() == Some("1") {
+    if std::env::var("CARGO_RAPK_DETERMINISTIC").ok().as_deref() == Some("1") {
         let pwd = std::env::current_dir().ok();
         let cargo_home = std::env::var("CARGO_HOME")
             .ok()
