@@ -72,15 +72,17 @@ fn best_ndk_under(sdk: &std::path::Path) -> Option<std::path::PathBuf> {
             continue;
         }
         if let Ok(text) = std::fs::read_to_string(&props) {
-            if let Some((_, v)) = text
+            let revision_line = text
                 .lines()
-                .find_map(|l| l.split_once('=').map(|(k, v)| (k.trim(), v.trim())))
-                .filter(|(k, _)| *k == "Pkg.Revision")
-            {
+                .find(|line| line.starts_with("Pkg.Revision"))
+                .and_then(|line| line.split_once('='))
+                .map(|(_, v)| v.trim());
+
+            if let Some(v) = revision_line {
                 let rev = parse_pkg_revision(v);
                 let pick = match &best {
                     None => true,
-                    Some((_, old)) => rev > *old, // tuple order gives proper max; beta sorts after non-beta with same numbers
+                    Some((_, old)) => rev > *old,
                 };
                 if pick {
                     best = Some((cand.clone(), rev));
