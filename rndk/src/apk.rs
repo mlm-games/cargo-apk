@@ -89,24 +89,14 @@ impl ApkConfig {
         }
 
         if let Some(res) = &self.resources {
-            let canonical = dunce::canonicalize(res).unwrap_or_else(|_| res.clone());
-
-            aapt.arg("-S");
-            aapt.arg(&canonical);
+            aapt.arg("-S").arg(res);
         }
 
         if let Some(assets) = &self.assets {
-            if assets.to_string_lossy().contains(' ') {
-                eprintln!("WARNING: Assets path contains spaces: {}", assets.display());
-            }
-            let canonical = dunce::canonicalize(assets).unwrap_or_else(|_| assets.clone());
-            aapt.arg("-A");
-            aapt.arg(&canonical);
+            aapt.arg("-A").arg(assets);
         }
 
         if !aapt.status()?.success() {
-            eprintln!("aapt command failed. Full command:");
-            eprintln!("{:?}", aapt);
             return Err(NdkError::CmdFailed(Box::new(aapt)));
         }
 
