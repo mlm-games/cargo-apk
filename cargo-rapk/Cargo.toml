@@ -1,8 +1,8 @@
 [package]
 name = "cargo-rapk"
-version = "0.12.0"
+version.workspace = true
 authors = ["The Rust Windowing contributors"]          #OAuthors
-edition = "2024"
+edition.workspace = true
 description = "Helps cargo build APKs"
 license = "MIT OR Apache-2.0"
 keywords = ["android", "ndk", "apk"]
