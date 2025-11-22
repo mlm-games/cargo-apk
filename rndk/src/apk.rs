@@ -267,7 +267,7 @@ impl<'a> UnsignedApk<'a> {
             .arg(&key.path)
             .arg("--ks-pass")
             .arg(format!("pass:{}", &key.password));
-        
+
         if self.0.normalize_zip {
             apksigner
                 .arg("--v1-signing-enabled")
@@ -279,9 +279,9 @@ impl<'a> UnsignedApk<'a> {
                 .arg("--v4-signing-enabled")
                 .arg("false");
         }
-        
+
         apksigner.arg(self.0.apk());
-        
+
         if !apksigner.status()?.success() {
             return Err(NdkError::CmdFailed(Box::new(apksigner)));
         }
