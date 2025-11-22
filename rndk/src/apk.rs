@@ -230,7 +230,7 @@ impl<'a> UnalignedApk<'a> {
         let page_size_kb = std::env::var("CARGO_RAPK_PAGE_SIZE_KB")
             .ok()
             .and_then(|s| s.parse::<u32>().ok())
-            .unwrap_or(16);
+            .unwrap_or(4);
         let bt_ver = self.config.ndk.build_tools_version();
         if bt_ver >= "35.0.0" {
             zipalign.arg("-P").arg(page_size_kb.to_string());
@@ -266,8 +266,22 @@ impl<'a> UnsignedApk<'a> {
             .arg("--ks")
             .arg(&key.path)
             .arg("--ks-pass")
-            .arg(format!("pass:{}", &key.password))
-            .arg(self.0.apk());
+            .arg(format!("pass:{}", &key.password));
+        
+        if self.0.normalize_zip {
+            apksigner
+                .arg("--v1-signing-enabled")
+                .arg("false")
+                .arg("--v2-signing-enabled")
+                .arg("true")
+                .arg("--v3-signing-enabled")
+                .arg("true")
+                .arg("--v4-signing-enabled")
+                .arg("false");
+        }
+        
+        apksigner.arg(self.0.apk());
+        
         if !apksigner.status()?.success() {
             return Err(NdkError::CmdFailed(Box::new(apksigner)));
         }
