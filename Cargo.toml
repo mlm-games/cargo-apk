@@ -5,3 +5,6 @@ members = ["rndk", "ndk-examples", "cargo-rapk"]
 [workspace.package]
 version = "0.13.0"
 edition = "2024"
+
+[workspace.dependencies]
+rndk = { version = "*", path = "rndk" }
